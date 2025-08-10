@@ -1,0 +1,527 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local abilityService = Remotes:WaitForChild("AbilityService"):WaitForChild("ToServer")
+local toolService = Remotes:WaitForChild("ToolService"):WaitForChild("ToServer")
+local CarryService = Remotes:WaitForChild("CarryService")
+
+local PreparingToResurrect = abilityService:WaitForChild("PreparingToResurrect")
+local AbilityActivated = abilityService:WaitForChild("AbilityActivated__")
+local ToolStateChanged = toolService:WaitForChild("ToolStateChanged")
+local AbilityStateChanged = abilityService:WaitForChild("AbilityStateChanged")
+local ToolActivated = toolService:WaitForChild("ToolActivated")
+
+local playerCloneFolder = Workspace:WaitForChild("playerCloneFolder")
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerToolSelector"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Circle button to toggle main container
+local circleButton = Instance.new("TextButton")
+circleButton.Size = UDim2.new(0, 40, 0, 40)
+circleButton.Position = UDim2.new(0, 20, 0, 150)
+circleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+circleButton.Text = "J"
+circleButton.Font = Enum.Font.SourceSansBold
+circleButton.TextSize = 24
+circleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+circleButton.AutoButtonColor = false
+circleButton.Parent = screenGui
+circleButton.ZIndex = 10
+circleButton.Active = true
+circleButton.Draggable = true
+circleButton.BorderSizePixel = 0
+local circleUICorner = Instance.new("UICorner")
+circleUICorner.CornerRadius = UDim.new(1, 0)
+circleUICorner.Parent = circleButton
+
+-- Main container frame
+local container = Instance.new("Frame")
+container.Size = UDim2.new(0, 270, 0, 400)
+container.Position = UDim2.new(0, 70, 0, 150)
+container.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+container.BorderSizePixel = 2
+container.Visible = false
+container.Parent = screenGui
+container.Active = true
+container.Draggable = true
+container.ClipsDescendants = true
+
+local titleBar = Instance.new("TextLabel")
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+titleBar.Text = "Juno's GUI"
+titleBar.Font = Enum.Font.SourceSansBold
+titleBar.TextSize = 20
+titleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleBar.Parent = container
+
+-- Main Menu Frame
+local mainMenuFrame = Instance.new("Frame")
+mainMenuFrame.Size = UDim2.new(1, 0, 1, -30)
+mainMenuFrame.Position = UDim2.new(0, 0, 0, 30)
+mainMenuFrame.BackgroundTransparency = 1
+mainMenuFrame.Parent = container
+
+local mainMenuLayout = Instance.new("UIListLayout")
+mainMenuLayout.Padding = UDim.new(0, 10)
+mainMenuLayout.SortOrder = Enum.SortOrder.LayoutOrder
+mainMenuLayout.Parent = mainMenuFrame
+
+-- Function to create main menu buttons
+local function createSectionButton(text)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 50)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 22
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.AutoButtonColor = false
+    btn.BorderSizePixel = 0
+    btn.Parent = mainMenuFrame
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 8)
+    uiCorner.Parent = btn
+    return btn
+end
+
+-- Create section buttons
+local resurrectMenuBtn = createSectionButton("Resurrection")
+local undesiccationMenuBtn = createSectionButton("Undesiccation")
+local carryingMenuBtn = createSectionButton("Carrying")
+
+-- Toggle main container visibility on circle button click
+circleButton.MouseButton1Click:Connect(function()
+    container.Visible = not container.Visible
+    if container.Visible then
+        mainMenuFrame.Visible = true
+    end
+end)
+
+-- Connect main menu buttons to show sections (will finish this in part 2)
+-- PART 2: Resurrection Section
+
+local resurrectFrame = Instance.new("Frame")
+resurrectFrame.Size = UDim2.new(1, 0, 1, -30)
+resurrectFrame.Position = UDim2.new(0, 0, 0, 30)
+resurrectFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+resurrectFrame.Visible = false
+resurrectFrame.Parent = container
+
+local resurrectTitle = Instance.new("TextLabel")
+resurrectTitle.Size = UDim2.new(1, 0, 0, 30)
+resurrectTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+resurrectTitle.Text = "Resurrection"
+resurrectTitle.Font = Enum.Font.SourceSansBold
+resurrectTitle.TextSize = 22
+resurrectTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+resurrectTitle.Parent = resurrectFrame
+
+local backButtonResurrect = Instance.new("TextButton")
+backButtonResurrect.Size = UDim2.new(0, 80, 0, 30)
+backButtonResurrect.Position = UDim2.new(0, 5, 0, 0)
+backButtonResurrect.Text = "< Back"
+backButtonResurrect.Font = Enum.Font.SourceSansBold
+backButtonResurrect.TextSize = 18
+backButtonResurrect.TextColor3 = Color3.fromRGB(255, 255, 255)
+backButtonResurrect.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+backButtonResurrect.AutoButtonColor = false
+backButtonResurrect.BorderSizePixel = 0
+backButtonResurrect.Parent = resurrectFrame
+local backCorner = Instance.new("UICorner")
+backCorner.CornerRadius = UDim.new(0, 6)
+backCorner.Parent = backButtonResurrect
+
+local scrollResurrect = Instance.new("ScrollingFrame")
+scrollResurrect.Position = UDim2.new(0, 0, 0, 35)
+scrollResurrect.Size = UDim2.new(1, 0, 1, -35)
+scrollResurrect.BackgroundTransparency = 1
+scrollResurrect.BorderSizePixel = 0
+scrollResurrect.ScrollBarThickness = 8
+scrollResurrect.Parent = resurrectFrame
+scrollResurrect.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollResurrect.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local resurrectLayout = Instance.new("UIListLayout")
+resurrectLayout.Padding = UDim.new(0, 5)
+resurrectLayout.SortOrder = Enum.SortOrder.LayoutOrder
+resurrectLayout.Parent = scrollResurrect
+
+-- Function to send resurrection remote calls
+local function resurrectPlayer(targetName)
+    pcall(function() PreparingToResurrect:InvokeServer() end)
+    pcall(function() ToolStateChanged:FireServer() end)
+    pcall(function() AbilityActivated:FireServer(targetName) end)
+    local chant = "Phasmatos Ravaros On Animum"
+    pcall(function() AbilityStateChanged:FireServer(chant) end)
+end
+
+-- Create buttons for each dead player model in playerCloneFolder
+local function createResurrectionButtons()
+    for _, child in ipairs(scrollResurrect:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    for _, model in ipairs(playerCloneFolder:GetChildren()) do
+        if model:IsA("Model") then
+            local button = Instance.new("TextButton")
+            button.Size = UDim2.new(1, -10, 0, 40)
+            button.Position = UDim2.new(0, 5, 0, 0)
+            button.Text = model.Name
+            button.Font = Enum.Font.SourceSansBold
+            button.TextSize = 18
+            button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            button.Parent = scrollResurrect
+            button.AutoButtonColor = false
+            button.BorderSizePixel = 0
+            local uiCorner = Instance.new("UICorner")
+            uiCorner.CornerRadius = UDim.new(0, 6)
+            uiCorner.Parent = button
+
+            local confirmed = false
+            local resetThread
+            button.MouseButton1Click:Connect(function()
+                if confirmed then
+                    button.Text = "Resurrecting " .. model.Name .. "..."
+                    resurrectPlayer(model.Name)
+                    confirmed = false
+                    if resetThread then task.cancel(resetThread) end
+                    task.delay(2, function()
+                        button.Text = model.Name
+                    end)
+                else
+                    confirmed = true
+                    button.Text = "Double-click to confirm: " .. model.Name
+                    resetThread = task.delay(4, function()
+                        confirmed = false
+                        button.Text = model.Name
+                    end)
+                end
+            end)
+        end
+    end
+end
+
+-- Back button returns to main menu
+backButtonResurrect.MouseButton1Click:Connect(function()
+    resurrectFrame.Visible = false
+    mainMenuFrame.Visible = true
+end)
+
+-- Update buttons when models are added/removed
+playerCloneFolder.ChildAdded:Connect(createResurrectionButtons)
+playerCloneFolder.ChildRemoved:Connect(createResurrectionButtons)
+
+-- Initially create buttons
+createResurrectionButtons()
+
+-- Connect main menu button to show Resurrection section
+resurrectMenuBtn.MouseButton1Click:Connect(function()
+    mainMenuFrame.Visible = false
+    resurrectFrame.Visible = true
+    createResurrectionButtons()
+end)
+-- PART 3: Undesiccation Section
+
+local undesiccationFrame = Instance.new("Frame")
+undesiccationFrame.Size = UDim2.new(1, 0, 1, -30)
+undesiccationFrame.Position = UDim2.new(0, 0, 0, 30)
+undesiccationFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+undesiccationFrame.Visible = false
+undesiccationFrame.Parent = container
+
+local undesiccationTitle = Instance.new("TextLabel")
+undesiccationTitle.Size = UDim2.new(1, 0, 0, 30)
+undesiccationTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+undesiccationTitle.Text = "Undesiccation"
+undesiccationTitle.Font = Enum.Font.SourceSansBold
+undesiccationTitle.TextSize = 22
+undesiccationTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+undesiccationTitle.Parent = undesiccationFrame
+
+local backButtonUndesiccation = Instance.new("TextButton")
+backButtonUndesiccation.Size = UDim2.new(0, 80, 0, 30)
+backButtonUndesiccation.Position = UDim2.new(0, 5, 0, 0)
+backButtonUndesiccation.Text = "< Back"
+backButtonUndesiccation.Font = Enum.Font.SourceSansBold
+backButtonUndesiccation.TextSize = 18
+backButtonUndesiccation.TextColor3 = Color3.fromRGB(255, 255, 255)
+backButtonUndesiccation.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+backButtonUndesiccation.AutoButtonColor = false
+backButtonUndesiccation.BorderSizePixel = 0
+backButtonUndesiccation.Parent = undesiccationFrame
+local backCornerUndesiccation = Instance.new("UICorner")
+backCornerUndesiccation.CornerRadius = UDim.new(0, 6)
+backCornerUndesiccation.Parent = backButtonUndesiccation
+
+local scrollUndesiccation = Instance.new("ScrollingFrame")
+scrollUndesiccation.Position = UDim2.new(0, 0, 0, 35)
+scrollUndesiccation.Size = UDim2.new(1, 0, 1, -35)
+scrollUndesiccation.BackgroundTransparency = 1
+scrollUndesiccation.BorderSizePixel = 0
+scrollUndesiccation.ScrollBarThickness = 8
+scrollUndesiccation.Parent = undesiccationFrame
+scrollUndesiccation.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollUndesiccation.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local undesiccationLayout = Instance.new("UIListLayout")
+undesiccationLayout.Padding = UDim.new(0, 5)
+undesiccationLayout.SortOrder = Enum.SortOrder.LayoutOrder
+undesiccationLayout.Parent = scrollUndesiccation
+
+-- Function to create undesiccate buttons for all players except local
+local function createUndesiccateButtons()
+    for _, child in ipairs(scrollUndesiccation:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    for _, target in ipairs(Players:GetPlayers()) do
+        if target ~= player and target.Character then
+            local button = Instance.new("TextButton")
+            button.Size = UDim2.new(1, -10, 0, 40)
+            button.Position = UDim2.new(0, 5, 0, 0)
+            button.Text = target.Name
+            button.Font = Enum.Font.SourceSansBold
+            button.TextSize = 18
+            button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            button.Parent = scrollUndesiccation
+            button.AutoButtonColor = false
+            button.BorderSizePixel = 0
+            local uiCorner = Instance.new("UICorner")
+            uiCorner.CornerRadius = UDim.new(0, 6)
+            uiCorner.Parent = button
+
+            local confirmed = false
+            local resetThread
+
+            button.MouseButton1Click:Connect(function()
+                if confirmed then
+                    button.Text = "Using Tool on " .. target.Name .. "..."
+                    pcall(function() ToolActivated:FireServer(target.Character) end)
+                    confirmed = false
+                    if resetThread then task.cancel(resetThread) end
+                    task.delay(2, function()
+                        button.Text = target.Name
+                    end)
+                else
+                    confirmed = true
+                    button.Text = "Double-click to confirm: " .. target.Name
+                    resetThread = task.delay(4, function()
+                        confirmed = false
+                        button.Text = target.Name
+                    end)
+                end
+            end)
+        end
+    end
+end
+
+-- Back button shows main menu
+backButtonUndesiccation.MouseButton1Click:Connect(function()
+    undesiccationFrame.Visible = false
+    mainMenuFrame.Visible = true
+end)
+
+-- Update buttons on player join/leave
+Players.PlayerAdded:Connect(createUndesiccateButtons)
+Players.PlayerRemoving:Connect(createUndesiccateButtons)
+createUndesiccateButtons()
+
+-- Main menu button to open undesiccation section
+undesiccationMenuBtn.MouseButton1Click:Connect(function()
+    mainMenuFrame.Visible = false
+    undesiccationFrame.Visible = true
+    createUndesiccateButtons()
+end)
+-- PART 4: Carrying Section
+
+local carryingFrame = Instance.new("Frame")
+carryingFrame.Size = UDim2.new(1, 0, 1, -30)
+carryingFrame.Position = UDim2.new(0, 0, 0, 30)
+carryingFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+carryingFrame.Visible = false
+carryingFrame.Parent = container
+
+local carryingTitle = Instance.new("TextLabel")
+carryingTitle.Size = UDim2.new(1, 0, 0, 30)
+carryingTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+carryingTitle.Text = "Carrying"
+carryingTitle.Font = Enum.Font.SourceSansBold
+carryingTitle.TextSize = 22
+carryingTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+carryingTitle.Parent = carryingFrame
+
+local backButtonCarrying = Instance.new("TextButton")
+backButtonCarrying.Size = UDim2.new(0, 80, 0, 30)
+backButtonCarrying.Position = UDim2.new(0, 5, 0, 0)
+backButtonCarrying.Text = "< Back"
+backButtonCarrying.Font = Enum.Font.SourceSansBold
+backButtonCarrying.TextSize = 18
+backButtonCarrying.TextColor3 = Color3.fromRGB(255, 255, 255)
+backButtonCarrying.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+backButtonCarrying.AutoButtonColor = false
+backButtonCarrying.BorderSizePixel = 0
+backButtonCarrying.Parent = carryingFrame
+local backCornerCarrying = Instance.new("UICorner")
+backCornerCarrying.CornerRadius = UDim.new(0, 6)
+backCornerCarrying.Parent = backButtonCarrying
+
+local scrollCarrying = Instance.new("ScrollingFrame")
+scrollCarrying.Position = UDim2.new(0, 0, 0, 35)
+scrollCarrying.Size = UDim2.new(1, 0, 1, -35)
+scrollCarrying.BackgroundTransparency = 1
+scrollCarrying.BorderSizePixel = 0
+scrollCarrying.ScrollBarThickness = 8
+scrollCarrying.Parent = carryingFrame
+scrollCarrying.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollCarrying.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local carryingLayout = Instance.new("UIListLayout")
+carryingLayout.Padding = UDim.new(0, 5)
+carryingLayout.SortOrder = Enum.SortOrder.LayoutOrder
+carryingLayout.Parent = scrollCarrying
+
+local function fireCarryRemotes(name)
+    local playerChar = Players:FindFirstChild(name)
+    if playerChar and playerChar.Character then
+        pcall(function()
+            CarryService:WaitForChild("RequestToCarryPlayer"):InvokeServer(playerChar.Character)
+        end)
+    end
+    local clone = playerCloneFolder:FindFirstChild(name)
+    if clone then
+        pcall(function()
+            CarryService:WaitForChild("RequestToCarryPlayer"):InvokeServer(clone)
+        end)
+    end
+end
+
+local function fireDropRemotes(name)
+    local clone = playerCloneFolder:FindFirstChild(name)
+    if clone then
+        pcall(function()
+            CarryService:WaitForChild("RequestToReleasePlayer"):InvokeServer(clone)
+        end)
+    end
+    local char = Players:FindFirstChild(name)
+    if char and char.Character then
+        pcall(function()
+            CarryService:WaitForChild("RequestToReleasePlayer"):InvokeServer(char.Character)
+        end)
+    end
+end
+
+local function createCarryButtons()
+    for _, child in ipairs(scrollCarrying:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+
+    local added = {}
+
+    local function makeRow(name, isDead)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 40)
+        row.BackgroundTransparency = 1
+        row.Parent = scrollCarrying
+
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(0.7, -5, 1, 0)
+        button.Position = UDim2.new(0, 0, 0, 0)
+        button.Text = isDead and "(dead)\n" .. name or name
+        button.TextWrapped = true
+        button.Font = Enum.Font.SourceSansBold
+        button.TextSize = 18
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        button.Parent = row
+        button.AutoButtonColor = false
+        button.BorderSizePixel = 0
+        local uiCorner = Instance.new("UICorner")
+        uiCorner.CornerRadius = UDim.new(0, 6)
+        uiCorner.Parent = button
+
+        local dropBtn = Instance.new("TextButton")
+        dropBtn.Size = UDim2.new(0.3, -5, 1, 0)
+        dropBtn.Position = UDim2.new(0.7, 5, 0, 0)
+        dropBtn.Text = "Drop"
+        dropBtn.Font = Enum.Font.SourceSansBold
+        dropBtn.TextSize = 18
+        dropBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        dropBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+        dropBtn.Parent = row
+        dropBtn.AutoButtonColor = false
+        dropBtn.BorderSizePixel = 0
+        local dropCorner = Instance.new("UICorner")
+        dropCorner.CornerRadius = UDim.new(0, 6)
+        dropCorner.Parent = dropBtn
+
+        local confirmed = false
+        local resetThread
+
+        button.MouseButton1Click:Connect(function()
+            if confirmed then
+                button.Text = "Carrying " .. name .. "..."
+                fireCarryRemotes(name)
+                confirmed = false
+                if resetThread then task.cancel(resetThread) end
+                task.delay(2, function()
+                    button.Text = isDead and "(dead)\n" .. name or name
+                end)
+            else
+                confirmed = true
+                button.Text = "Double-click to confirm: " .. name
+                resetThread = task.delay(4, function()
+                    confirmed = false
+                    button.Text = isDead and "(dead)\n" .. name or name
+                end)
+            end
+        end)
+
+        dropBtn.MouseButton1Click:Connect(function()
+            dropBtn.Text = "Dropping..."
+            fireDropRemotes(name)
+            task.delay(1.5, function() dropBtn.Text = "Drop" end)
+        end)
+    end
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then
+            added[p.Name] = true
+            makeRow(p.Name, false)
+        end
+    end
+
+    for _, clone in ipairs(playerCloneFolder:GetChildren()) do
+        if clone:IsA("Model") and not added[clone.Name] then
+            added[clone.Name] = true
+            makeRow(clone.Name, true)
+        end
+    end
+end
+
+backButtonCarrying.MouseButton1Click:Connect(function()
+    carryingFrame.Visible = false
+    mainMenuFrame.Visible = true
+end)
+
+Players.PlayerAdded:Connect(createCarryButtons)
+Players.PlayerRemoving:Connect(createCarryButtons)
+playerCloneFolder.ChildAdded:Connect(createCarryButtons)
+playerCloneFolder.ChildRemoved:Connect(createCarryButtons)
+createCarryButtons()
+
+-- Main menu button to open carrying section
+carryingMenuBtn.MouseButton1Click:Connect(function()
+    mainMenuFrame.Visible = false
+    carryingFrame.Visible = true
+    createCarryButtons()
+end)
