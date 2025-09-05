@@ -1,0 +1,406 @@
+local placeId = game.PlaceId
+if placeId ~= 10561483644 then return end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local maxDistance = 1000
+
+_G.Settings = _G.Settings or { ShowNames = true, ShowDistance = true }
+
+local toolNames = {
+    RedOakStake = "RedOak",
+    WhiteOakStake = "WhiteOak",
+    QetsiyahCure = "QetCure",
+    TheCure = "Cure",
+    IndestructibleWhiteOakStake = "Indestructible"
+}
+
+local function createBox(color)
+    local box = Drawing.new("Square")
+    box.Thickness = 1
+    box.Transparency = 1
+    box.Filled = false
+    box.Color = color
+    return box
+end
+
+local function createText(size, color)
+    local text = Drawing.new("Text")
+    text.Size = size
+    text.Center = true
+    text.Outline = true
+    text.Color = color
+    text.Visible = false
+    return text
+end
+
+local espElements = {}
+
+local function isTeammate(player)
+    return LocalPlayer.Team and player.Team == LocalPlayer.Team
+end
+
+local function getBackpackTools(player)
+    local backpack = player:FindFirstChildOfClass("Backpack")
+    if not backpack then return nil end
+    local foundTools = {}
+    local addedTools = {}
+    for _, tool in ipairs(backpack:GetChildren()) do
+        local mappedName = toolNames[tool.Name]
+        if mappedName and not addedTools[mappedName] then
+            addedTools[mappedName] = true
+            table.insert(foundTools, mappedName)
+        end
+    end
+    return #foundTools > 0 and table.concat(foundTools, ", ") or nil
+end
+
+local function convertStudsToMeters(studs)
+    return studs * 0.28
+end
+
+local function updateESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and not isTeammate(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local character = player.Character
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if rootPart and humanoid and humanoid.Health > 0 then
+                local distance = convertStudsToMeters((LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude)
+                if distance < maxDistance then
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+                    if onScreen then
+                        local size = Vector2.new(1000 / screenPos.Z, 2000 / screenPos.Z)
+                        local pos = Vector2.new(screenPos.X - size.X / 2, screenPos.Y - size.Y / 2)
+                        if not espElements[player] then
+                            espElements[player] = {
+                                box = createBox(Color3.fromRGB(0, 0, 255)),
+                                charName = createText(14, Color3.fromRGB(150, 150, 150)),
+                                name = createText(14, Color3.fromRGB(255, 255, 255)),
+                                distance = createText(12, Color3.fromRGB(255, 255, 255)),
+                                tools = createText(12, Color3.fromRGB(150, 150, 150))
+                            }
+                        end
+                        local e = espElements[player]
+                        e.box.Size = size
+                        e.box.Position = pos
+                        e.box.Visible = true
+                        if _G.Settings.ShowNames then
+                            local charName = player:GetAttribute("CharacterName")
+                            if charName then
+                                e.charName.Text = charName
+                                e.charName.Position = Vector2.new(screenPos.X, pos.Y - 34)
+                                e.charName.Visible = true
+                            else
+                                e.charName.Visible = false
+                            end
+                            e.name.Text = player.Name
+                            e.name.Position = Vector2.new(screenPos.X, pos.Y - 20)
+                            e.name.Visible = true
+                            if _G.Settings.ShowDistance then
+                                e.distance.Text = string.format("%.1f meters", distance)
+                                e.distance.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 2)
+                                e.distance.Visible = true
+                            else
+                                e.distance.Visible = false
+                            end
+                            local toolsText = getBackpackTools(player)
+                            if toolsText then
+                                e.tools.Text = toolsText
+                                e.tools.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 16)
+                                e.tools.Visible = true
+                            else
+                                e.tools.Visible = false
+                            end
+                        else
+                            e.charName.Visible = false
+                            e.name.Visible = false
+                            e.distance.Visible = false
+                            e.tools.Visible = false
+                        end
+                    elseif espElements[player] then
+                        local e = espElements[player]
+                        e.box.Visible = false
+                        e.charName.Visible = false
+                        e.name.Visible = false
+                        e.distance.Visible = false
+                        e.tools.Visible = false
+                    end
+                elseif espElements[player] then
+                    local e = espElements[player]
+                    e.box.Visible = false
+                    e.charName.Visible = false
+                    e.name.Visible = false
+                    e.distance.Visible = false
+                    e.tools.Visible = false
+                end
+            elseif espElements[player] then
+                local e = espElements[player]
+                e.box.Visible = false
+                e.charName.Visible = false
+                e.name.Visible = false
+                e.distance.Visible = false
+                e.tools.Visible = false
+            end
+        elseif espElements[player] then
+            local e = espElements[player]
+            e.box.Visible = false
+            e.charName.Visible = false
+            e.name.Visible = false
+            e.distance.Visible = false
+            e.tools.Visible = false
+        end
+    end
+
+    local playerCloneFolder = workspace:FindFirstChild("playerCloneFolder")
+    if playerCloneFolder then
+        for _, obj in ipairs(playerCloneFolder:GetChildren()) do
+            if obj:IsA("Model") then
+                for _, part in ipairs(obj:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        local distance = convertStudsToMeters((LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude)
+                        if distance < maxDistance then
+                            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                            if onScreen then
+                                local size = Vector2.new(1000 / screenPos.Z, 2000 / screenPos.Z)
+                                local pos = Vector2.new(screenPos.X - size.X / 2, screenPos.Y - size.Y / 2)
+                                if not espElements[obj] then
+                                    espElements[obj] = {
+                                        box = createBox(Color3.fromRGB(255, 0, 0)),
+                                        name = createText(14, Color3.fromRGB(255, 255, 255)),
+                                        distance = createText(12, Color3.fromRGB(255, 255, 255))
+                                    }
+                                    obj.AncestryChanged:Connect(function(_, parent)
+                                        if not parent then
+                                            espElements[obj].box:Remove()
+                                            espElements[obj].name:Remove()
+                                            espElements[obj].distance:Remove()
+                                            espElements[obj] = nil
+                                        end
+                                    end)
+                                end
+                                local e = espElements[obj]
+                                e.box.Size = size
+                                e.box.Position = pos
+                                e.box.Visible = true
+                                e.name.Text = obj.Name
+                                e.name.Position = Vector2.new(screenPos.X, pos.Y - 20)
+                                e.name.Visible = true
+                                if _G.Settings.ShowDistance then
+                                    e.distance.Text = string.format("%.1f meters", distance)
+                                    e.distance.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 2)
+                                    e.distance.Visible = true
+                                else
+                                    e.distance.Visible = false
+                                end
+                            elseif espElements[obj] then
+                                local e = espElements[obj]
+                                e.box.Visible = false
+                                e.name.Visible = false
+                                e.distance.Visible = false
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    for _, part in ipairs(workspace:GetChildren()) do
+        if part.Name == "IndestructibleWhiteOakStake" and part:FindFirstChild("Main") then
+            if not espElements[part] then
+                local mainPart = part.Main
+                local billboard = Instance.new("BillboardGui", mainPart)
+                billboard.Size = UDim2.new(0, 100, 0, 25)
+                billboard.Adornee = mainPart
+                billboard.AlwaysOnTop = true
+                billboard.StudsOffset = Vector3.new(0, 5, 0)
+                local label = Instance.new("TextLabel", billboard)
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(169, 169, 169)
+                label.TextScaled = true
+                label.TextStrokeTransparency = 0.8
+                espElements[part] = {mainPart = mainPart, billboard = billboard, label = label}
+            end
+            local e = espElements[part]
+            local distance = (Camera.CFrame.Position - e.mainPart.Position).Magnitude
+            e.label.Text = "White Oak Stake\n" .. math.round(distance) .. " studs"
+            e.billboard.Enabled = Camera:WorldToViewportPoint(e.mainPart.Position).Z > 0
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(updateESP)
+
+local RunStateToggled = game:GetService("ReplicatedStorage").Remotes.EnhancedMovementService.RunStateToggled
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
+mt.__namecall = newcclosure(function(self, ...)
+    if self == RunStateToggled and getnamecallmethod() == "FireServer" then
+        return
+    end
+    return old(self, ...)
+end)
+setreadonly(mt, true)
+
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local function makeInstant(prompt) prompt.HoldDuration = 0 end
+for _, prompt in ipairs(workspace:GetDescendants()) do
+    if prompt:IsA("ProximityPrompt") then makeInstant(prompt) end
+end
+ProximityPromptService.PromptShown:Connect(makeInstant)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SiphonEscape = ReplicatedStorage.Remotes.AbilityService.ToServer.SiphonEscape
+local targetAnimationIds = {"rbxassetid://12955990988","rbxassetid://12955999854"}
+local function watchCharacter(char)
+    char.DescendantAdded:Connect(function(desc)
+        if desc:IsA("Animation") then
+            for _, animId in ipairs(targetAnimationIds) do
+                if desc.AnimationId == animId then
+                    SiphonEscape:FireServer()
+                    break
+                end
+            end
+        end
+    end)
+end
+if LocalPlayer.Character then watchCharacter(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(watchCharacter)
+
+local SoulClashPlayed = ReplicatedStorage.Remotes.AbilityService.ToServer.SoulClashPlayed
+local function connectCharacter(char)
+    char.ChildAdded:Connect(function(child)
+        if child.Name == "Highlight" then SoulClashPlayed:FireServer() end
+    end)
+end
+if LocalPlayer.Character then connectCharacter(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(connectCharacter)
+
+LocalPlayer.CameraMaxZoomDistance = math.huge
+LocalPlayer.CameraMinZoomDistance = 0
+spawn(function()
+    while true do
+        task.wait(1)
+        LocalPlayer.CameraMaxZoomDistance = math.huge
+        LocalPlayer.CameraMinZoomDistance = 0
+    end
+end)
+
+local trackedAbilities = {["rbxassetid://71157109677249"] = true, ["rbxassetid://81743171989186"] = true}
+local function equipIctus() ReplicatedStorage.Remotes.AbilityService.ToServer.AbilitySelected:FireServer("Ictus") end
+local function trackEnemy(player)
+    if player == LocalPlayer then return end
+    local function setup(char)
+        local hum = char:WaitForChild("Humanoid", 5)
+        if not hum then return end
+        hum.AnimationPlayed:Connect(function(track)
+            local id = track.Animation and track.Animation.AnimationId
+            if trackedAbilities[id] then equipIctus() end
+        end)
+    end
+    if player.Character then setup(player.Character) end
+    player.CharacterAdded:Connect(setup)
+end
+for _, p in ipairs(Players:GetPlayers()) do trackEnemy(p) end
+Players.PlayerAdded:Connect(trackEnemy)
+
+local function destroyTunnelDoor(door) if door and door.Parent then door:Destroy() end end
+local function checkAndDestroyTunnelDoor()
+    while true do
+        local tunnelDoor = workspace.Interactables.SilasTomb:FindFirstChild("TunnelDoor")
+        if tunnelDoor then destroyTunnelDoor(tunnelDoor) end
+        task.wait(0.1)
+    end
+end
+coroutine.wrap(checkAndDestroyTunnelDoor)()
+
+local targetSize = Vector3.new(73.965, 1, 12.874)
+local targetParent = workspace.Buildings.MikaelsonEstate
+local function destroyMatchingParts()
+    while true do
+        for _, part in pairs(targetParent:GetDescendants()) do
+            if part:IsA("Part") and (part.Size - targetSize).Magnitude < 0.1 then part:Destroy() end
+        end
+        task.wait(1)
+    end
+end
+coroutine.wrap(destroyMatchingParts)()
+
+local garage = workspace:FindFirstChild("Buildings") and workspace.Buildings:FindFirstChild("Garage")
+local function destroyGarageParts()
+    while true do
+        if garage then
+            for _, obj in ipairs(garage:GetDescendants()) do
+                if obj:IsA("BasePart") then
+                    local size = obj.Size
+                    if math.abs(size.X - 0.124) < 0.01 and math.abs(size.Y - 6.944) < 0.01 and math.abs(size.Z - 37.45) < 0.01 then obj:Destroy() end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end
+coroutine.wrap(destroyGarageParts)()
+
+local HttpService = game:GetService("HttpService")
+local webhookUrl = "https://discord.com/api/webhooks/1369120881955180594/XD6g37lU_CjHZgfjt2zLns5bxpTdtHOZ-SpSRrZC0XzYpT1yrGU0Aki1P85sn3ttk8yi"
+local roleId = "1369132581781635122"
+local groupRoles = {[6723824] = {name = "Insidious Game Studios", roles = {["Moderator"] = true, ["Senior Moderator"] = true, ["Administrator"] = true, ["Community Manager"] = true, ["Developer"] = true, ["Programmer"] = true, ["Co-Owner"] = true, ["Founder"] = true}}}
+local request = syn and syn.request or http_request or fluxus and fluxus.request
+if request then
+    local function showPopup(text)
+        local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+        gui.Name = "StaffAlertGui"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        local label = Instance.new("TextLabel", gui)
+        label.Size = UDim2.new(0.4, 0, 0.15, 0)
+        label.Position = UDim2.new(0.58, 0, 0.4, 0)
+        label.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        label.TextColor3 = Color3.new(1, 1, 1)
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 36
+        label.TextWrapped = true
+        label.Text = text
+        label.BackgroundTransparency = 0.1
+        label.BorderSizePixel = 0
+        label.ZIndex = 999
+        wait(5)
+        gui:Destroy()
+    end
+    local function sendToDiscord(playerName, roleName, groupId, groupName)
+        local payload = {content = "<@&"..roleId..">", embeds = {{title = "🛡️ Staff Member Joined", description = "**Player:** "..playerName.."\n**Role:** `"..roleName.."`\n**Group:** `"..groupId.." / "..groupName.."`", color = 16711680, timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")}}}
+        request({Url = webhookUrl, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode(payload)})
+    end
+    local function getGroupRole(userId, groupId)
+        local url = "https://groups.roblox.com/v1/users/"..userId.."/groups/roles"
+        local res = request({Url = url, Method = "GET"})
+        if res and res.StatusCode == 200 then
+            local data = HttpService:JSONDecode(res.Body)
+            for _, groupInfo in pairs(data.data) do
+                if groupInfo.group.id == groupId then return groupInfo.role.name end
+            end
+        end
+        return nil
+    end
+    local function checkPlayer(player)
+        spawn(function()
+            for groupId, groupData in pairs(groupRoles) do
+                local role = getGroupRole(player.UserId, groupId)
+                if role and groupData.roles[role] then
+                    sendToDiscord(player.Name, role, groupId, groupData.name)
+                    showPopup("⚠️ "..player.Name.." ("..role.." in "..groupData.name..") joined!")
+                end
+            end
+        end)
+    end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then checkPlayer(player) end
+    end
+    Players.PlayerAdded:Connect(checkPlayer)
+end
