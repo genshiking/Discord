@@ -61,96 +61,68 @@ local function convertStudsToMeters(studs)
     return studs * 0.28
 end
 
+local function hideESP(obj)
+    local e = espElements[obj]
+    if e then
+        for _, v in pairs(e) do
+            if v and v.Visible ~= nil then v.Visible = false end
+        end
+    end
+end
+
 local function updateESP()
     for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and not isTeammate(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local character = player.Character
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if rootPart and humanoid and humanoid.Health > 0 then
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = player.Character.HumanoidRootPart
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 and not isTeammate(player) then
                 local distance = convertStudsToMeters((LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude)
-                if distance < maxDistance then
-                    local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
-                    if onScreen then
-                        local size = Vector2.new(1000 / screenPos.Z, 2000 / screenPos.Z)
-                        local pos = Vector2.new(screenPos.X - size.X / 2, screenPos.Y - size.Y / 2)
-                        if not espElements[player] then
-                            espElements[player] = {
-                                box = createBox(Color3.fromRGB(0, 0, 255)),
-                                charName = createText(14, Color3.fromRGB(150, 150, 150)),
-                                name = createText(14, Color3.fromRGB(255, 255, 255)),
-                                distance = createText(12, Color3.fromRGB(255, 255, 255)),
-                                tools = createText(12, Color3.fromRGB(150, 150, 150))
-                            }
-                        end
-                        local e = espElements[player]
-                        e.box.Size = size
-                        e.box.Position = pos
-                        e.box.Visible = true
-                        if _G.Settings.ShowNames then
-                            local charName = player:GetAttribute("CharacterName")
-                            if charName then
-                                e.charName.Text = charName
-                                e.charName.Position = Vector2.new(screenPos.X, pos.Y - 34)
-                                e.charName.Visible = true
-                            else
-                                e.charName.Visible = false
-                            end
-                            e.name.Text = player.Name
-                            e.name.Position = Vector2.new(screenPos.X, pos.Y - 20)
-                            e.name.Visible = true
-                            if _G.Settings.ShowDistance then
-                                e.distance.Text = string.format("%.1f meters", distance)
-                                e.distance.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 2)
-                                e.distance.Visible = true
-                            else
-                                e.distance.Visible = false
-                            end
-                            local toolsText = getBackpackTools(player)
-                            if toolsText then
-                                e.tools.Text = toolsText
-                                e.tools.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 16)
-                                e.tools.Visible = true
-                            else
-                                e.tools.Visible = false
-                            end
-                        else
-                            e.charName.Visible = false
-                            e.name.Visible = false
-                            e.distance.Visible = false
-                            e.tools.Visible = false
-                        end
-                    elseif espElements[player] then
-                        local e = espElements[player]
-                        e.box.Visible = false
+                local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+                if distance < maxDistance and onScreen then
+                    local size = Vector2.new(1000 / screenPos.Z, 2000 / screenPos.Z)
+                    local pos = Vector2.new(screenPos.X - size.X / 2, screenPos.Y - size.Y / 2)
+                    if not espElements[player] then
+                        espElements[player] = {
+                            box = createBox(Color3.fromRGB(0, 0, 255)),
+                            charName = createText(14, Color3.fromRGB(150, 150, 150)),
+                            name = createText(14, Color3.fromRGB(255, 255, 255)),
+                            distance = createText(12, Color3.fromRGB(255, 255, 255)),
+                            tools = createText(12, Color3.fromRGB(150, 150, 150))
+                        }
+                    end
+                    local e = espElements[player]
+                    e.box.Size = size
+                    e.box.Position = pos
+                    e.box.Visible = true
+                    if _G.Settings.ShowNames then
+                        local charName = player:GetAttribute("CharacterName")
+                        e.charName.Text = charName or ""
+                        e.charName.Position = Vector2.new(screenPos.X, pos.Y - 34)
+                        e.charName.Visible = charName ~= nil
+                        e.name.Text = player.Name
+                        e.name.Position = Vector2.new(screenPos.X, pos.Y - 20)
+                        e.name.Visible = true
+                        e.distance.Text = string.format("%.1f meters", distance)
+                        e.distance.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 2)
+                        e.distance.Visible = _G.Settings.ShowDistance
+                        local toolsText = getBackpackTools(player)
+                        e.tools.Text = toolsText or ""
+                        e.tools.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 16)
+                        e.tools.Visible = toolsText ~= nil
+                    else
                         e.charName.Visible = false
                         e.name.Visible = false
                         e.distance.Visible = false
                         e.tools.Visible = false
                     end
-                elseif espElements[player] then
-                    local e = espElements[player]
-                    e.box.Visible = false
-                    e.charName.Visible = false
-                    e.name.Visible = false
-                    e.distance.Visible = false
-                    e.tools.Visible = false
+                else
+                    hideESP(player)
                 end
-            elseif espElements[player] then
-                local e = espElements[player]
-                e.box.Visible = false
-                e.charName.Visible = false
-                e.name.Visible = false
-                e.distance.Visible = false
-                e.tools.Visible = false
+            else
+                hideESP(player)
             end
-        elseif espElements[player] then
-            local e = espElements[player]
-            e.box.Visible = false
-            e.charName.Visible = false
-            e.name.Visible = false
-            e.distance.Visible = false
-            e.tools.Visible = false
+        else
+            hideESP(player)
         end
     end
 
@@ -161,46 +133,37 @@ local function updateESP()
                 for _, part in ipairs(obj:GetChildren()) do
                     if part:IsA("BasePart") then
                         local distance = convertStudsToMeters((LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude)
-                        if distance < maxDistance then
-                            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                            if onScreen then
-                                local size = Vector2.new(1000 / screenPos.Z, 2000 / screenPos.Z)
-                                local pos = Vector2.new(screenPos.X - size.X / 2, screenPos.Y - size.Y / 2)
-                                if not espElements[obj] then
-                                    espElements[obj] = {
-                                        box = createBox(Color3.fromRGB(255, 0, 0)),
-                                        name = createText(14, Color3.fromRGB(255, 255, 255)),
-                                        distance = createText(12, Color3.fromRGB(255, 255, 255))
-                                    }
-                                    obj.AncestryChanged:Connect(function(_, parent)
-                                        if not parent then
-                                            espElements[obj].box:Remove()
-                                            espElements[obj].name:Remove()
-                                            espElements[obj].distance:Remove()
-                                            espElements[obj] = nil
-                                        end
-                                    end)
-                                end
-                                local e = espElements[obj]
-                                e.box.Size = size
-                                e.box.Position = pos
-                                e.box.Visible = true
-                                e.name.Text = obj.Name
-                                e.name.Position = Vector2.new(screenPos.X, pos.Y - 20)
-                                e.name.Visible = true
-                                if _G.Settings.ShowDistance then
-                                    e.distance.Text = string.format("%.1f meters", distance)
-                                    e.distance.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 2)
-                                    e.distance.Visible = true
-                                else
-                                    e.distance.Visible = false
-                                end
-                            elseif espElements[obj] then
-                                local e = espElements[obj]
-                                e.box.Visible = false
-                                e.name.Visible = false
-                                e.distance.Visible = false
+                        local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                        if distance < maxDistance and onScreen then
+                            local size = Vector2.new(1000 / screenPos.Z, 2000 / screenPos.Z)
+                            local pos = Vector2.new(screenPos.X - size.X / 2, screenPos.Y - size.Y / 2)
+                            if not espElements[obj] then
+                                espElements[obj] = {
+                                    box = createBox(Color3.fromRGB(255, 0, 0)),
+                                    name = createText(14, Color3.fromRGB(255, 255, 255)),
+                                    distance = createText(12, Color3.fromRGB(255, 255, 255))
+                                }
+                                obj.AncestryChanged:Connect(function(_, parent)
+                                    if not parent then
+                                        espElements[obj].box:Remove()
+                                        espElements[obj].name:Remove()
+                                        espElements[obj].distance:Remove()
+                                        espElements[obj] = nil
+                                    end
+                                end)
                             end
+                            local e = espElements[obj]
+                            e.box.Size = size
+                            e.box.Position = pos
+                            e.box.Visible = true
+                            e.name.Text = obj.Name
+                            e.name.Position = Vector2.new(screenPos.X, pos.Y - 20)
+                            e.name.Visible = true
+                            e.distance.Text = string.format("%.1f meters", distance)
+                            e.distance.Position = Vector2.new(screenPos.X, pos.Y + size.Y + 2)
+                            e.distance.Visible = _G.Settings.ShowDistance
+                        else
+                            hideESP(obj)
                         end
                     end
                 end
