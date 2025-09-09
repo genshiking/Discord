@@ -191,7 +191,6 @@ end
 
 RunService.RenderStepped:Connect(updateESP)
 
--- Block RunStateToggled remote
 local RunStateToggled = game:GetService("ReplicatedStorage").Remotes.EnhancedMovementService.RunStateToggled
 local mt = getrawmetatable(game)
 local old = mt.__namecall
@@ -202,7 +201,6 @@ mt.__namecall=newcclosure(function(self,...)
 end)
 setreadonly(mt,true)
 
--- Flexible Proximity Prompt
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local function makeFlexible(prompt)
     if prompt:IsA("ProximityPrompt") then
@@ -223,7 +221,6 @@ end
 for _, prompt in ipairs(workspace:GetDescendants()) do makeFlexible(prompt) end
 ProximityPromptService.PromptShown:Connect(makeFlexible)
 
--- SiphonEscape cancel
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SiphonEscape = ReplicatedStorage.Remotes.AbilityService.ToServer.SiphonEscape
 local targetAnimationIds = {"rbxassetid://12955990988","rbxassetid://12955999854"}
@@ -239,7 +236,6 @@ end
 if LocalPlayer.Character then watchCharacter(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(watchCharacter)
 
--- SoulClash cancel
 local SoulClashPlayed = ReplicatedStorage.Remotes.AbilityService.ToServer.SoulClashPlayed
 local function connectCharacter(char)
     char.ChildAdded:Connect(function(child) if child.Name=="Highlight" then SoulClashPlayed:FireServer() end end)
@@ -247,20 +243,17 @@ end
 if LocalPlayer.Character then connectCharacter(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(connectCharacter)
 
--- nccam style (ignore walls + infinite zoom)
+local player = game.Players.LocalPlayer
+player.CameraMaxZoomDistance = math.huge
+player.CameraMinZoomDistance = 0
 spawn(function()
     while true do
-        LocalPlayer.CameraMaxZoomDistance = math.huge
-        LocalPlayer.CameraMinZoomDistance = 0
-        if Camera then
-            Camera.CameraType = Enum.CameraType.Custom
-            Camera.CollisionGroupId = 0
-        end
-        task.wait(0.1)
+        task.wait(1)
+        player.CameraMaxZoomDistance = math.huge
+        player.CameraMinZoomDistance = 0
     end
 end)
 
--- Auto Ictus counter
 local trackedAbilities={["rbxassetid://71157109677249"]=true,["rbxassetid://81743171989186"]=true}
 local function equipIctus() ReplicatedStorage.Remotes.AbilityService.ToServer.AbilitySelected:FireServer("Ictus") end
 local function trackEnemy(player)
@@ -279,7 +272,6 @@ end
 for _, p in ipairs(Players:GetPlayers()) do trackEnemy(p) end
 Players.PlayerAdded:Connect(trackEnemy)
 
--- Staff webhook alert
 local HttpService=game:GetService("HttpService")
 local webhookUrl="https://discord.com/api/webhooks/1369120881955180594/XD6g37lU_CjHZgfjt2zLns5bxpTdtHOZ-SpSRrZC0XzYpT1yrGU0Aki1P85sn3ttk8yi"
 local roleId="1369132581781635122"
@@ -333,9 +325,8 @@ if request then
     Players.PlayerAdded:Connect(checkPlayer)
 end
 
--- UI cleanup
-local player = game.Players.LocalPlayer
-local screenUtils = player:WaitForChild("PlayerGui"):WaitForChild("ScreenUtils")
+local player2 = game.Players.LocalPlayer
+local screenUtils = player2:WaitForChild("PlayerGui"):WaitForChild("ScreenUtils")
 local children = screenUtils:GetChildren()
 if #children >= 5 then
     children[3]:Destroy()
@@ -343,7 +334,6 @@ if #children >= 5 then
     children[5]:Destroy()
 end
 
--- Map object removals for specific place
 if placeId==10561483644 then
     local function destroyTunnelDoor(door) if door and door.Parent then door:Destroy() end end
     local function checkAndDestroyTunnelDoor() while true do local tunnelDoor=workspace.Interactables.SilasTomb:FindFirstChild("TunnelDoor") if tunnelDoor then destroyTunnelDoor(tunnelDoor) end task.wait(0.1) end end
