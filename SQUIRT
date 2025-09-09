@@ -5,7 +5,6 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local maxDistance = 1000
 _G.Settings = _G.Settings or { ShowNames = true, ShowDistance = true }
-
 local toolNames = {
     RedOakStake = "RedOak",
     WhiteOakStake = "WhiteOak",
@@ -13,7 +12,6 @@ local toolNames = {
     TheCure = "Cure",
     IndestructibleWhiteOakStake = "Indestructible"
 }
-
 local function createBox(color)
     local box = Drawing.new("Square")
     box.Thickness = 1
@@ -22,7 +20,6 @@ local function createBox(color)
     box.Color = color
     return box
 end
-
 local function createText(size,color)
     local text = Drawing.new("Text")
     text.Size = size
@@ -32,13 +29,10 @@ local function createText(size,color)
     text.Visible = false
     return text
 end
-
 local espElements = {}
-
 local function isTeammate(player)
     return LocalPlayer.Team and player.Team == LocalPlayer.Team
 end
-
 local function getBackpackTools(player)
     local backpack = player:FindFirstChildOfClass("Backpack")
     if not backpack then return nil end
@@ -53,11 +47,9 @@ local function getBackpackTools(player)
     end
     return #foundTools>0 and table.concat(foundTools,", ") or nil
 end
-
 local function convertStudsToMeters(studs)
     return studs*0.28
 end
-
 local function removeESP(obj)
     if espElements[obj] then
         local e = espElements[obj]
@@ -67,7 +59,6 @@ local function removeESP(obj)
         espElements[obj] = nil
     end
 end
-
 local function updateESP()
     for _, player in ipairs(Players:GetPlayers()) do
         if player~=LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -125,7 +116,6 @@ local function updateESP()
             removeESP(player)
         end
     end
-
     local playerCloneFolder = workspace:FindFirstChild("playerCloneFolder")
     if playerCloneFolder then
         for _, obj in ipairs(playerCloneFolder:GetChildren()) do
@@ -163,7 +153,6 @@ local function updateESP()
             end
         end
     end
-
     for _, part in ipairs(workspace:GetChildren()) do
         if part.Name=="IndestructibleWhiteOakStake" and part:FindFirstChild("Main") then
             if not espElements[part] then
@@ -188,10 +177,7 @@ local function updateESP()
         end
     end
 end
-
 RunService.RenderStepped:Connect(updateESP)
-
--- EnhancedMovementService run toggle bypass
 local RunStateToggled = game:GetService("ReplicatedStorage").Remotes.EnhancedMovementService.RunStateToggled
 local mt = getrawmetatable(game)
 local old = mt.__namecall
@@ -201,8 +187,6 @@ mt.__namecall=newcclosure(function(self,...)
     return old(self,...)
 end)
 setreadonly(mt,true)
-
--- ProximityPrompt auto-fire
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local function makeFlexible(prompt)
     if prompt:IsA("ProximityPrompt") then
@@ -222,8 +206,6 @@ local function makeFlexible(prompt)
 end
 for _, prompt in ipairs(workspace:GetDescendants()) do makeFlexible(prompt) end
 ProximityPromptService.PromptShown:Connect(makeFlexible)
-
--- Ability tracking
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SiphonEscape = ReplicatedStorage.Remotes.AbilityService.ToServer.SiphonEscape
 local targetAnimationIds = {"rbxassetid://12955990988","rbxassetid://12955999854"}
@@ -238,15 +220,12 @@ local function watchCharacter(char)
 end
 if LocalPlayer.Character then watchCharacter(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(watchCharacter)
-
 local SoulClashPlayed = ReplicatedStorage.Remotes.AbilityService.ToServer.SoulClashPlayed
 local function connectCharacter(char)
     char.ChildAdded:Connect(function(child) if child.Name=="Highlight" then SoulClashPlayed:FireServer() end end)
 end
 if LocalPlayer.Character then connectCharacter(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(connectCharacter)
-
--- Infinite zoom / Popper fix
 LocalPlayer.CameraMaxZoomDistance = math.huge
 LocalPlayer.CameraMinZoomDistance = 0
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -259,14 +238,12 @@ for _, v in next, getgc() do
         end
     end
 end
-
 task.spawn(function()
     while task.wait(1) do
         LocalPlayer.CameraMaxZoomDistance = math.huge
         LocalPlayer.CameraMinZoomDistance = 0
     end
 end)
-
 task.spawn(function()
     while task.wait() do
         if Camera and LocalPlayer.Character then
@@ -275,8 +252,6 @@ task.spawn(function()
         end
     end
 end)
-
--- Enemy ability tracking (Ictus)
 local trackedAbilities={["rbxassetid://71157109677249"]=true,["rbxassetid://81743171989186"]=true}
 local function equipIctus() ReplicatedStorage.Remotes.AbilityService.ToServer.AbilitySelected:FireServer("Ictus") end
 local function trackEnemy(player)
@@ -294,8 +269,6 @@ local function trackEnemy(player)
 end
 for _, p in ipairs(Players:GetPlayers()) do trackEnemy(p) end
 Players.PlayerAdded:Connect(trackEnemy)
-
--- Discord staff alerts
 local HttpService=game:GetService("HttpService")
 local webhookUrl="https://discord.com/api/webhooks/1369120881955180594/XD6g37lU_CjHZgfjt2zLns5bxpTdtHOZ-SpSRrZC0XzYpT1yrGU0Aki1P85sn3ttk8yi"
 local roleId="1369132581781635122"
@@ -348,8 +321,6 @@ if request then
     for _,player in ipairs(Players:GetPlayers()) do if player~=LocalPlayer then checkPlayer(player) end end
     Players.PlayerAdded:Connect(checkPlayer)
 end
-
--- ScreenUtils cleanup
 local screenUtils = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("ScreenUtils")
 local children = screenUtils:GetChildren()
 if #children >= 5 then
@@ -357,18 +328,14 @@ if #children >= 5 then
     children[4]:Destroy()
     children[5]:Destroy()
 end
-
--- Place-specific destroyables
 if placeId==10561483644 then
     local function destroyTunnelDoor(door) if door and door.Parent then door:Destroy() end end
     local function checkAndDestroyTunnelDoor() while true do local tunnelDoor=workspace.Interactables.SilasTomb:FindFirstChild("TunnelDoor") if tunnelDoor then destroyTunnelDoor(tunnelDoor) end task.wait(0.1) end end
     coroutine.wrap(checkAndDestroyTunnelDoor)()
-    
     local targetSize=Vector3.new(73.965,1,12.874)
     local targetParent=workspace.Buildings.MikaelsonEstate
     local function destroyMatchingParts() while true do for _,part in pairs(targetParent:GetDescendants()) do if part:IsA("Part") and (part.Size-targetSize).Magnitude<0.1 then part:Destroy() end end task.wait(1) end end
     coroutine.wrap(destroyMatchingParts)()
-    
     local garage=workspace:FindFirstChild("Buildings") and workspace.Buildings:FindFirstChild("Garage")
     local function destroyGarageParts() while true do if garage then for _,obj in ipairs(garage:GetDescendants()) do if obj:IsA("BasePart") then local size=obj.Size if math.abs(size.X-0.124)<0.01 and math.abs(size.Y-6.944)<0.01 and math.abs(size.Z-37.45)<0.01 then obj:Destroy() end end end end task.wait(1) end end
     coroutine.wrap(destroyGarageParts)()
