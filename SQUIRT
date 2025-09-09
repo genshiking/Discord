@@ -244,13 +244,23 @@ if LocalPlayer.Character then connectCharacter(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(connectCharacter)
 
 local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
 player.CameraMaxZoomDistance = math.huge
 player.CameraMinZoomDistance = 0
-spawn(function()
-    while true do
-        task.wait(1)
+
+task.spawn(function()
+    while task.wait(1) do
         player.CameraMaxZoomDistance = math.huge
         player.CameraMinZoomDistance = 0
+    end
+end)
+
+task.spawn(function()
+    while task.wait() do
+        if camera and player.Character then
+            camera.CameraType = Enum.CameraType.Custom
+            camera.CameraSubject = player.Character:FindFirstChildOfClass("Humanoid")
+        end
     end
 end)
 
@@ -325,8 +335,7 @@ if request then
     Players.PlayerAdded:Connect(checkPlayer)
 end
 
-local player2 = game.Players.LocalPlayer
-local screenUtils = player2:WaitForChild("PlayerGui"):WaitForChild("ScreenUtils")
+local screenUtils = player:WaitForChild("PlayerGui"):WaitForChild("ScreenUtils")
 local children = screenUtils:GetChildren()
 if #children >= 5 then
     children[3]:Destroy()
