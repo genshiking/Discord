@@ -206,9 +206,7 @@ local function makeFlexible(prompt)
 end
 for _, prompt in ipairs(workspace:GetDescendants()) do makeFlexible(prompt) end
 ProximityPromptService.PromptShown:Connect(makeFlexible)
-
-if LocalPlayer.Character then connectCharacter(LocalPlayer.Character) end
-LocalPlayer.CharacterAdded:Connect(connectCharacter)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 LocalPlayer.CameraMaxZoomDistance = math.huge
 LocalPlayer.CameraMinZoomDistance = 0
 if not game:IsLoaded() then game.Loaded:Wait() end
