@@ -206,24 +206,7 @@ local function makeFlexible(prompt)
 end
 for _, prompt in ipairs(workspace:GetDescendants()) do makeFlexible(prompt) end
 ProximityPromptService.PromptShown:Connect(makeFlexible)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SiphonEscape = ReplicatedStorage.Remotes.AbilityService.ToServer.SiphonEscape
-local targetAnimationIds = {"rbxassetid://12955990988","rbxassetid://12955999854"}
-local function watchCharacter(char)
-    char.DescendantAdded:Connect(function(desc)
-        if desc:IsA("Animation") then
-            for _, animId in ipairs(targetAnimationIds) do
-                if desc.AnimationId==animId then SiphonEscape:FireServer() break end
-            end
-        end
-    end)
-end
-if LocalPlayer.Character then watchCharacter(LocalPlayer.Character) end
-LocalPlayer.CharacterAdded:Connect(watchCharacter)
-local SoulClashPlayed = ReplicatedStorage.Remotes.AbilityService.ToServer.SoulClashPlayed
-local function connectCharacter(char)
-    char.ChildAdded:Connect(function(child) if child.Name=="Highlight" then SoulClashPlayed:FireServer() end end)
-end
+
 if LocalPlayer.Character then connectCharacter(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(connectCharacter)
 LocalPlayer.CameraMaxZoomDistance = math.huge
