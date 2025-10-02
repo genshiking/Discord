@@ -321,3 +321,133 @@ if placeId==10561483644 then
     local function destroyGarageParts() while true do if garage then for _,obj in ipairs(garage:GetDescendants()) do if obj:IsA("BasePart") then local size=obj.Size if math.abs(size.X-0.124)<0.01 and math.abs(size.Y-6.944)<0.01 and math.abs(size.Z-37.45)<0.01 then obj:Destroy() end end end end task.wait(1) end end
     coroutine.wrap(destroyGarageParts)()
 end
+
+local function disableShakeFunctions()
+    local disabled = 0
+    local gc = getgc(true)
+
+    for i, v in pairs(gc) do
+        if type(v) == 'table' then
+            pcall(function()
+                -- Standard shake functions
+                if rawget(v, 'SmallShake') and type(v.SmallShake) == 'function' then
+                    v.SmallShake = function() end
+                    disabled = disabled + 1
+                end
+
+                if rawget(v, 'StartShake') and type(v.StartShake) == 'function' then
+                    v.StartShake = function() end
+                    disabled = disabled + 1
+                end
+
+                if rawget(v, 'ShakeSustain') and type(v.ShakeSustain) == 'function' then
+                    v.ShakeSustain = function() end
+                    disabled = disabled + 1
+                end
+
+                -- Lowercase variations
+                if rawget(v, 'smallShake') and type(v.smallShake) == 'function' then
+                    v.smallShake = function() end
+                    disabled = disabled + 1
+                end
+
+                if rawget(v, 'startShake') and type(v.startShake) == 'function' then
+                    v.startShake = function() end
+                    disabled = disabled + 1
+                end
+
+                if rawget(v, 'shakeSustain') and type(v.shakeSustain) == 'function' then
+                    v.shakeSustain = function() end
+                    disabled = disabled + 1
+                end
+
+                -- Camera shaker function
+                if rawget(v, '_startCameraShaker') and type(v._startCameraShaker) == 'function' then
+                    v._startCameraShaker = function() end
+                    disabled = disabled + 1
+                end
+
+                -- Pattern matching for shake-related functions
+                for key, value in pairs(v) do
+                    if type(key) == 'string' and type(value) == 'function' then
+                        if key:match('SmallShake') or key:match('StartShake') or 
+                           key:match('ShakeSustain') or key:lower():find('camerashak') then
+                            v[key] = function() end
+                            disabled = disabled + 1
+                        end
+                    end
+
+                    -- Check nested tables
+                    if type(value) == 'table' and rawget(value, '_startCameraShaker') then
+                        value._startCameraShaker = function() end
+                        disabled = disabled + 1
+                    end
+                end
+            end)
+        end
+
+        if type(v) == 'function' then
+            pcall(function()
+                local info = debug.getinfo(v)
+                if info and info.name and info.name == '_startCameraShaker' then
+                    hookfunction(v, function() end)
+                    disabled = disabled + 1
+                end
+            end)
+        end
+    end
+
+    return disabled
+end
+
+_G.startShakeDisabler = function()
+    if _G.shakeDisablerActive then
+        print('[Shake Disabler] Already running!')
+        return
+    end
+
+    _G.shakeDisablerActive = true
+    
+    print(string.rep('=', 50))
+    print('=== CAMERA SHAKE DISABLER ===')
+    print(string.rep('=', 50))
+    print('[Shake Disabler] Starting continuous monitoring...')
+    print('[Shake Disabler] Call _G.stopShakeDisabler() to stop')
+    print(string.rep('=', 50))
+
+    local RunService = game:GetService('RunService')
+    local totalDisabled = 0
+    local lastReport = tick()
+
+    _G.shakeDisablerConnection = RunService.Heartbeat:Connect(function()
+        local disabled = disableShakeFunctions()
+        
+        if disabled > 0 then
+            totalDisabled = totalDisabled + disabled
+        end
+
+        if tick() - lastReport >= 5 and totalDisabled > 0 then
+            print('[Shake Disabler] Total functions disabled: ' .. totalDisabled)
+            lastReport = tick()
+        end
+    end)
+end
+
+_G.stopShakeDisabler = function()
+    if _G.shakeDisablerConnection then
+        _G.shakeDisablerConnection:Disconnect()
+        _G.shakeDisablerActive = false
+        _G.shakeDisablerConnection = nil
+        print(string.rep('=', 50))
+        print('[Shake Disabler] Stopped')
+        print(string.rep('=', 50))
+    else
+        print('[Shake Disabler] No active disabler to stop')
+    end
+end
+
+_G.startShakeDisabler()
+
+print('\nTo manually stop: _G.stopShakeDisabler()')
+print('To restart: _G.startShakeDisabler()')
+print(string.rep('=', 50))
