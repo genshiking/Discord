@@ -321,3 +321,411 @@ if placeId==10561483644 then
     local function destroyGarageParts() while true do if garage then for _,obj in ipairs(garage:GetDescendants()) do if obj:IsA("BasePart") then local size=obj.Size if math.abs(size.X-0.124)<0.01 and math.abs(size.Y-6.944)<0.01 and math.abs(size.Z-37.45)<0.01 then obj:Destroy() end end end end task.wait(1) end end
     coroutine.wrap(destroyGarageParts)()
 end
+
+-- Clustered Mobile Ability Button
+-- Supports: ErroxFemus, Aquamalia, SuperPunch, Ossox, AdSomnum, Immobilus,
+--           PhasmatosMotusIncendiamos (Incendiamos), Choke, ThroatRip, EyeGouge, SpineBreak,
+--           SuperKick, SuperSlap,
+--           SoulBinding, BloodBoil, AvitaExari, DelfanEotenCor, LecutioMaxima, DarkMagicBlast, HealingBolt,
+--           AleoraSubsitos (Bonnie Heartstop), DuratusVita (Bonnie Stone), PetramAeternum, FoYatoSi,
+--           PhasmatosImpetumImmortale, SolvereTenebrisSanguinis, Ventus, GlaceSolidatur,
+--           TelekineticScratch (Scratch), Vido,
+--           IllusionAttack, TelekineticHeadRip, StranguloVentus, InvisiqueConfero, MotusCorporis
+--
+-- - Finds the Z/X/C cluster and snaps an "ability" puck one step BEFORE Z (counter-clockwise)
+-- - If an "ability" placeholder exists in the cluster, mirrors its layout exactly
+-- - Falls back gracefully if the cluster/template can't be found
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local AbilityData = require(ReplicatedStorage.ModuleScripts.Data.AbilityData)
+local AbilityName = require(ReplicatedStorage.ModuleScripts.Enums.AbilityName)
+local ActionButton = require(ReplicatedStorage.ModuleScripts.FusionComponents.Buttons.ActionButton)
+local GenericActionButton = require(ReplicatedStorage.ModuleScripts.FusionComponents.ScreenUtils.GenericActionButton)
+
+--------------------------------------------------------------------------------
+-- Enable mobileActionButton flags (supports both enum and string keyed AbilityData)
+--------------------------------------------------------------------------------
+local function enableMobileFlag(abilityEnum, fallbackKey)
+	if abilityEnum and AbilityData[abilityEnum] then
+		AbilityData[abilityEnum].mobileActionButton = true
+	elseif fallbackKey and AbilityData[fallbackKey] then
+		AbilityData[fallbackKey].mobileActionButton = true
+	end
+end
+
+-- previous set
+enableMobileFlag(AbilityName.ErroxFemus, "ErroxFemus")
+enableMobileFlag(AbilityName.Aquamalia, "Aquamalia")
+enableMobileFlag(AbilityName.SuperPunch, "SuperPunch")
+enableMobileFlag(AbilityName.Ossox, "Ossox")
+enableMobileFlag(AbilityName.AdSomnum, "AdSomnum")
+enableMobileFlag(AbilityName.Immobilus, "Immobilus")
+enableMobileFlag(AbilityName.PhasmatosMotusIncendiamos, "PhasmatosMotusIncendiamos")
+enableMobileFlag(AbilityName.Choke, "Choke")
+enableMobileFlag(AbilityName.ThroatRip, "ThroatRip")
+enableMobileFlag(AbilityName.EyeGouge, "EyeGouge")
+enableMobileFlag(AbilityName.SpineBreak, "SpineBreak")
+enableMobileFlag(AbilityName.SuperKick, "SuperKick")
+enableMobileFlag(AbilityName.SuperSlap, "SuperSlap")
+
+-- “newer” abilities (phase 1)
+enableMobileFlag(AbilityName.SoulBinding, "SoulBinding")
+enableMobileFlag(AbilityName.BloodBoil, "BloodBoil")
+enableMobileFlag(AbilityName.AvitaExari, "AvitaExari")
+enableMobileFlag(AbilityName.DelfanEotenCor, "DelfanEotenCor")
+enableMobileFlag(AbilityName.LecutioMaxima, "LecutioMaxima")
+enableMobileFlag(AbilityName.DarkMagicBlast, "DarkMagicBlast")
+enableMobileFlag(AbilityName.HealingBolt, "HealingBolt")
+
+-- “newer” abilities (phase 2)
+-- Bonnie Heartstop / Aleora
+enableMobileFlag(AbilityName.AleoraSubsitos, "AleoraSubsitos")
+enableMobileFlag(nil, "BonnieHeartStop") -- string-only fallback
+
+-- “Bonnie Stone”
+enableMobileFlag(AbilityName.DuratusVita, "DuratusVita")
+enableMobileFlag(nil, "BonnieStone") -- string-only fallback
+
+-- Petram Aeternum
+enableMobileFlag(AbilityName.PetramAeternum, "PetramAeternum")
+enableMobileFlag(nil, "Petranamaeternum") -- common misspelling seen in code
+
+-- Fo Yato Si
+enableMobileFlag(AbilityName.FoYatoSi, "FoYatoSi")
+enableMobileFlag(nil, "Foyatosi")
+
+-- Phasmatos Impetum Immortale
+enableMobileFlag(AbilityName.PhasmatosImpetumImmortale, "PhasmatosImpetumImmortale")
+
+-- Solvere Tenebris Sanguinis
+enableMobileFlag(AbilityName.SolvereTenebrisSanguinis, "SolvereTenebrisSanguinis")
+
+-- Ventus / Glace / Scratch / Vido
+enableMobileFlag(AbilityName.Ventus, "Ventus")
+enableMobileFlag(AbilityName.GlaceSolidatur, "GlaceSolidatur")
+enableMobileFlag(AbilityName.TelekineticScratch, "TelekineticScratch")
+enableMobileFlag(nil, "Scratch") -- shorthand
+enableMobileFlag(AbilityName.Vido, "Vido")
+
+-- Missing from your latest list:
+enableMobileFlag(AbilityName.IllusionAttack, "IllusionAttack")
+enableMobileFlag(nil, "Illusion Attack") -- space variant
+enableMobileFlag(AbilityName.TelekineticHeadRip, "TelekineticHeadRip")
+enableMobileFlag(AbilityName.StranguloVentus, "StranguloVentus")
+enableMobileFlag(AbilityName.InvisiqueConfero, "InvisiqueConfero")
+enableMobileFlag(nil, "Invisique Confero") -- space variant
+enableMobileFlag(AbilityName.MotusCorporis, "MotusCorporis")
+
+--------------------------------------------------------------------------------
+-- Cluster utilities
+--------------------------------------------------------------------------------
+
+-- 1) Find the Z/X/C cluster parent (the frame that actually holds those pucks)
+local function findClusterParent(): GuiObject?
+	local candidates = {} -- parent -> count of Z/X/C found
+	for _, d in ipairs(PlayerGui:GetDescendants()) do
+		if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Parent and d.Parent:IsA("GuiObject") then
+			local t = (d.Text or ""):lower()
+			if t == "z" or t == "x" or t == "c" then
+				candidates[d.Parent] = (candidates[d.Parent] or 0) + 1
+			end
+		end
+	end
+	local best, score = nil, 0
+	for parent, n in pairs(candidates) do
+		if n > score then
+			best, score = parent, n
+		end
+	end
+	return best -- GuiObject or nil
+end
+
+-- 2) Inside the cluster, try to find an "ability" placeholder *in that same parent*
+local function findAbilityTemplateInCluster(cluster: GuiObject): GuiObject?
+	if not cluster then
+		return nil
+	end
+	for _, d in ipairs(cluster:GetDescendants()) do
+		if d:IsA("TextLabel") or d:IsA("TextButton") then
+			local t = (d.Text or ""):lower()
+			if t == "ability" then
+				local a = d
+				while a and not (a:IsA("ImageButton") or a:IsA("Frame")) do
+					a = a.Parent
+				end
+				return a
+			end
+		end
+	end
+	return nil
+end
+
+-- 3) Solve position from the arc of Z, X, C: one step BEFORE Z (counter-clockwise)
+local function computeAbilityFromZXC(cluster: GuiObject): UDim2?
+	if not cluster then
+		return nil
+	end
+
+	local Z, X, C
+	for _, d in ipairs(cluster:GetDescendants()) do
+		if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Parent and d.Parent:IsA("GuiObject") then
+			local t = (d.Text or ""):lower()
+			if t == "z" then
+				Z = d.Parent
+			elseif t == "x" then
+				X = d.Parent
+			elseif t == "c" then
+				C = d.Parent
+			end
+		end
+	end
+	if not (Z and X and C) then
+		return nil
+	end
+
+	local function centerOf(g: GuiObject)
+		return g.AbsolutePosition + g.AbsoluteSize * 0.5
+	end
+	local pZ, pX, pC = centerOf(Z), centerOf(X), centerOf(C)
+
+	local function perpBisector(a: Vector2, b: Vector2)
+		local mid = (a + b) / 2
+		local dir = b - a
+		return mid, Vector2.new(-dir.Y, dir.X)
+	end
+	local m1, n1 = perpBisector(pZ, pX)
+	local m2, n2 = perpBisector(pX, pC)
+	local denom = (n1.X * n2.Y - n1.Y * n2.X)
+	if math.abs(denom) < 1e-6 then
+		return nil
+	end
+	local t = ((m2.X - m1.X) * n2.Y - (m2.Y - m1.Y) * n2.X) / denom
+	local O = m1 + n1 * t
+	local r = (pX - O).Magnitude
+
+	local function angleOf(p: Vector2)
+		return math.atan2(p.Y - O.Y, p.X - O.X)
+	end
+	local aZ, aX = angleOf(pZ), angleOf(pX)
+
+	local function norm(a: number)
+		while a > math.pi do
+			a -= 2 * math.pi
+		end
+		while a < -math.pi do
+			a += 2 * math.pi
+		end
+		return a
+	end
+
+	local step = norm(aX - aZ)
+	local aAbility = aZ - step
+	local targetAbs = O + Vector2.new(math.cos(aAbility), math.sin(aAbility)) * r
+	local p0, sz = cluster.AbsolutePosition, cluster.AbsoluteSize
+	return UDim2.fromScale((targetAbs.X - p0.X) / sz.X, (targetAbs.Y - p0.Y) / sz.Y)
+end
+
+local function copyConstraints(fromGui: GuiObject, toGui: GuiObject)
+	for _, child in ipairs(fromGui:GetChildren()) do
+		if child:IsA("UIAspectRatioConstraint") then
+			local c = Instance.new("UIAspectRatioConstraint")
+			c.AspectRatio = child.AspectRatio
+			c.DominantAxis = child.DominantAxis
+			c.AspectType = child.AspectType
+			c.Parent = toGui
+		elseif child:IsA("UISizeConstraint") then
+			local c = Instance.new("UISizeConstraint")
+			c.MaxSize = child.MaxSize
+			c.MinSize = child.MinSize
+			c.Parent = toGui
+		elseif child:IsA("UIPadding") then
+			local c = Instance.new("UIPadding")
+			c.PaddingTop = child.PaddingTop
+			c.PaddingBottom = child.PaddingBottom
+			c.PaddingLeft = child.PaddingLeft
+			c.PaddingRight = child.PaddingRight
+			c.Parent = toGui
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
+-- ActionButton.show override
+--------------------------------------------------------------------------------
+
+local originalShow = ActionButton.show
+
+local function normAbilityName(a)
+	if typeof(a) ~= "string" then
+		return nil
+	end
+	return a:lower():gsub("%s+", "")
+end
+
+ActionButton.show = function(
+	self,
+	buttonText,
+	onActivated,
+	onActivatedHolding,
+	onDeactivate,
+	janitor,
+	isHolding,
+	targetType,
+	mobileActionButton,
+	abilityName
+)
+	local n = normAbilityName(abilityName)
+	local isClusterMobileAbility =
+		-- existing
+		abilityName == AbilityName.ErroxFemus
+		or abilityName == AbilityName.Aquamalia
+		or abilityName == AbilityName.SuperPunch
+		or abilityName == AbilityName.Ossox
+		or abilityName == AbilityName.AdSomnum
+		or abilityName == AbilityName.Immobilus
+		or abilityName == AbilityName.PhasmatosMotusIncendiamos
+		or abilityName == AbilityName.Choke
+		or abilityName == AbilityName.ThroatRip
+		or abilityName == AbilityName.EyeGouge
+		or abilityName == AbilityName.SpineBreak
+		or abilityName == AbilityName.SuperKick
+		or abilityName == AbilityName.SuperSlap
+		-- phase 1
+		or abilityName == AbilityName.SoulBinding
+		or abilityName == AbilityName.BloodBoil
+		or abilityName == AbilityName.AvitaExari
+		or abilityName == AbilityName.DelfanEotenCor
+		or abilityName == AbilityName.LecutioMaxima
+		or abilityName == AbilityName.DarkMagicBlast
+		or abilityName == AbilityName.HealingBolt
+		-- phase 2
+		or abilityName == AbilityName.AleoraSubsitos
+		or abilityName == AbilityName.DuratusVita
+		or abilityName == AbilityName.PetramAeternum
+		or abilityName == AbilityName.FoYatoSi
+		or abilityName == AbilityName.PhasmatosImpetumImmortale
+		or abilityName == AbilityName.SolvereTenebrisSanguinis
+		or abilityName == AbilityName.Ventus
+		or abilityName == AbilityName.GlaceSolidatur
+		or abilityName == AbilityName.TelekineticScratch
+		or abilityName == AbilityName.Vido
+		-- newly added from your snippets
+		or abilityName == AbilityName.IllusionAttack
+		or abilityName == AbilityName.TelekineticHeadRip
+		or abilityName == AbilityName.StranguloVentus
+		or abilityName == AbilityName.InvisiqueConfero
+		or abilityName == AbilityName.MotusCorporis
+		-- string fallbacks / shorthands / common typos
+		or n == "erroxfemus"
+		or n == "aquamalia"
+		or n == "superpunch"
+		or n == "ossox"
+		or n == "adsomnum"
+		or n == "immobilus"
+		or n == "phasmatosmotusincendiamos"
+		or n == "incendiamos"
+		or n == "choke"
+		or n == "throatrip"
+		or n == "thoratrip"
+		or n == "eyegouge"
+		or n == "spinebreak"
+		or n == "superkick"
+		or n == "superslap"
+		or n == "soulbinding"
+		or n == "bloodboil"
+		or n == "avitaexari"
+		or n == "delfaneotencor"
+		or n == "lecutiomaxima"
+		or n == "lecutiomaxim"
+		or n == "darkmagicblast"
+		or n == "healingbolt"
+		or n == "aleorasubsitos"
+		or n == "bonnieheartstop"
+		or n == "duratusvita"
+		or n == "bonniestone"
+		or n == "petramaeternum"
+		or n == "petranamaeternum"
+		or n == "foyatosi"
+		or n == "foyato"
+		or n == "foyato_si"
+		or n == "phasmatosimpetumimmortale"
+		or n == "impetumimmortale"
+		or n == "solveretenebrissanguinis"
+		or n == "ventus"
+		or n == "glacesolidatur"
+		or n == "telekineticscratch"
+		or n == "scratch"
+		or n == "vido"
+		-- NEW fallbacks
+		or n == "illusionattack"
+		or n == "illusionattak" -- common slip
+		or n == "telekineticheadrip"
+		or n == "telekentichedrip"
+		or n == "stranguloventus"
+		or n == "invisiqueconfero"
+		or n == "invisiquecoonfero"
+		or n == "motuscorporis"
+
+	if isClusterMobileAbility and UserInputService.TouchEnabled then
+		-- create within the Z/X/C cluster (or ScreenGui fallback)
+		local cluster = findClusterParent()
+		if not cluster then
+			local sg = PlayerGui:FindFirstChild("MobileAbilityGui") or Instance.new("ScreenGui")
+			sg.Name = "MobileAbilityGui"
+			sg.ResetOnSpawn = false
+			sg.IgnoreGuiInset = true
+			sg.Parent = PlayerGui
+			cluster = sg
+		end
+
+		local btn = GenericActionButton.new(onActivated, {
+			parent = cluster,
+			text = "ability",
+			janitor = janitor,
+		})
+
+		if typeof(btn) == "Instance" and btn:IsA("GuiObject") then
+			local template = findAbilityTemplateInCluster(cluster)
+			if template and template:IsA("GuiObject") then
+				btn.AnchorPoint = template.AnchorPoint
+				btn.Size = template.Size
+				btn.Position = template.Position
+				btn.SizeConstraint = template.SizeConstraint
+				btn.ZIndex = template.ZIndex
+				btn.LayoutOrder = template.LayoutOrder
+				copyConstraints(template, btn)
+				template.Visible = false
+			else
+				local pos = computeAbilityFromZXC(cluster)
+				btn.AnchorPoint = Vector2.new(0.5, 0.5)
+				btn.Size = UDim2.fromScale(0.133, 0.28)
+				btn.Position = pos or UDim2.fromScale(0.78, 0.62)
+				btn.ZIndex = 20
+			end
+		end
+
+		if janitor and typeof(janitor.Add) == "function" then
+			janitor:Add(btn, "Destroy")
+		end
+		return true
+	end
+
+	return originalShow(
+		self,
+		buttonText,
+		onActivated,
+		onActivatedHolding,
+		onDeactivate,
+		janitor,
+		isHolding,
+		targetType,
+		mobileActionButton,
+		abilityName
+	)
+end
