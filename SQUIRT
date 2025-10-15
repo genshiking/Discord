@@ -1,183 +1,278 @@
-local placeId = game.PlaceId
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local maxDistance = 1000
-_G.Settings = _G.Settings or { ShowNames = true, ShowDistance = true }
-local toolNames = {
-    RedOakStake = "RedOak",
-    WhiteOakStake = "WhiteOak",
-    QetsiyahCure = "QetCure",
-    TheCure = "Cure",
-    IndestructibleWhiteOakStake = "Indestructible"
+local Entities = workspace:WaitForChild("Entities")
+local PlayerClonesFolder = workspace:WaitForChild("playerCloneFolder")
+
+local espCache = {}
+
+local characterColors = {
+	["Esther Mikaelson"] = Color3.fromRGB(16, 142, 147),
+	["Davina Claire"] = Color3.fromRGB(243, 121, 178),
+	["Qetsiyah"] = Color3.fromRGB(88, 172, 243),
+	["Dark Josie"] = Color3.fromRGB(69, 1, 113),
+	["Josie Saltzman"] = Color3.fromRGB(155, 98, 193),
+	["Cleo Sowande"] = Color3.fromRGB(254, 214, 142),
+	["Bonnie Bennett"] = Color3.fromRGB(123, 52, 123),
+	["Hope Mikaelson"] = Color3.fromRGB(53, 67, 167),
+	["Silas"] = Color3.fromRGB(122, 0, 4),
+	["Landon Kirby"] = Color3.fromRGB(243, 96, 42)
 }
-local function createBox(color)
-    local box = Drawing.new("Square")
-    box.Thickness = 1
-    box.Transparency = 1
-    box.Filled = false
-    box.Color = color
-    return box
+
+local toolNames = {
+	["WoodenStake"] = "WoodenStake",
+	["WhiteOakStake"] = "WhiteOak",
+	["RedOakStake"] = "RedOak",
+	["MikaelWhiteOakStake"] = "MikaelWhiteOak",
+	["IndestructibleWhiteOakStake"] = "Indestructible",
+	["QetsiyahCure"] = "QetCure",
+	["TheCure"] = "Cure"
+}
+
+local function getPlayerTools(player)
+	local backpack = player:FindFirstChild("Backpack")
+	if not backpack then return "" end
+	local tools = {}
+	for _, item in pairs(backpack:GetChildren()) do
+		if toolNames[item.Name] then
+			table.insert(tools, toolNames[item.Name])
+		end
+	end
+	return table.concat(tools, ", ")
 end
-local function createText(size,color)
-    local text = Drawing.new("Text")
-    text.Size = size
-    text.Center = true
-    text.Outline = true
-    text.Color = color
-    text.Visible = false
-    return text
+
+local function createESP(entity, player, dead)
+	local head = entity:FindFirstChild("Head")
+	if not head then return end
+
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "ESP"
+	billboard.Adornee = head
+	billboard.Size = UDim2.new(0, 200, 0, 120)
+	billboard.StudsOffset = Vector3.new(0, 2, 0)
+	billboard.AlwaysOnTop = true
+	billboard.ClipsDescendants = false
+	billboard.Parent = entity
+
+	local uiList = Instance.new("UIListLayout")
+	uiList.FillDirection = Enum.FillDirection.Vertical
+	uiList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	uiList.VerticalAlignment = Enum.VerticalAlignment.Top
+	uiList.SortOrder = Enum.SortOrder.LayoutOrder
+	uiList.Parent = billboard
+
+	local deadLabel = Instance.new("TextLabel")
+	deadLabel.Name = "DeadLabel"
+	deadLabel.Size = UDim2.new(1, 0, 0, 20)
+	deadLabel.BackgroundTransparency = 1
+	deadLabel.TextScaled = true
+	deadLabel.Font = Enum.Font.FredokaOne
+	deadLabel.TextStrokeTransparency = 1
+	deadLabel.TextColor3 = Color3.new(0,0,0)
+	deadLabel.Text = dead and "💀" or ""
+	deadLabel.Parent = billboard
+
+	local charLabel = Instance.new("TextLabel")
+	charLabel.Name = "CharacterName"
+	charLabel.Size = UDim2.new(1, 0, 0, 20)
+	charLabel.BackgroundTransparency = 1
+	charLabel.TextScaled = true
+	charLabel.Font = Enum.Font.FredokaOne
+	charLabel.TextStrokeTransparency = 1
+	charLabel.TextColor3 = Color3.new(1,1,1)
+	charLabel.Parent = billboard
+
+	local userLabel = Instance.new("TextLabel")
+	userLabel.Name = "Username"
+	userLabel.Size = UDim2.new(1, 0, 0, 20)
+	userLabel.BackgroundTransparency = 1
+	userLabel.TextScaled = true
+	userLabel.Font = Enum.Font.FredokaOne
+	userLabel.TextStrokeTransparency = 1
+	userLabel.TextColor3 = LocalPlayer:IsFriendsWith(player.UserId) and Color3.fromRGB(139,255,139) or Color3.new(1,1,1)
+	userLabel.Text = player.Name
+	userLabel.Parent = billboard
+
+	local distLabel = Instance.new("TextLabel")
+	distLabel.Name = "Distance"
+	distLabel.Size = UDim2.new(1, 0, 0, 20)
+	distLabel.BackgroundTransparency = 1
+	distLabel.TextScaled = true
+	distLabel.Font = Enum.Font.FredokaOne
+	distLabel.TextStrokeTransparency = 1
+	distLabel.TextColor3 = Color3.new(1,1,1)
+	distLabel.Text = ""
+	distLabel.Parent = billboard
+
+	local toolLabel = Instance.new("TextLabel")
+	toolLabel.Name = "Tools"
+	toolLabel.Size = UDim2.new(1,0,0,20)
+	toolLabel.BackgroundTransparency = 1
+	toolLabel.TextScaled = true
+	toolLabel.Font = Enum.Font.FredokaOne
+	toolLabel.TextStrokeTransparency = 1
+	toolLabel.TextColor3 = Color3.new(1,1,1)
+	toolLabel.Text = ""
+	toolLabel.Parent = billboard
+
+	return {
+		billboard = billboard,
+		deadLabel = deadLabel,
+		charLabel = charLabel,
+		userLabel = userLabel,
+		distLabel = distLabel,
+		toolLabel = toolLabel,
+		player = player,
+		dead = dead
+	}
 end
-local espElements = {}
-local function isTeammate(player)
-    return LocalPlayer.Team and player.Team == LocalPlayer.Team
+
+local function trackClones(parent)
+	for _, child in pairs(parent:GetChildren()) do
+		if child:FindFirstChild("HumanoidRootPart") and child:FindFirstChild("Head") then
+			if not espCache[child] then
+				local player
+				for _, p in pairs(Players:GetPlayers()) do
+					if p.Name == child.Name then
+						player = p
+						break
+					end
+				end
+				if not player then player = {Name = child.Name, UserId = 0} end
+				espCache[child] = createESP(child, player, true)
+			end
+		elseif child:IsA("Folder") or child:IsA("Model") then
+			trackClones(child)
+		end
+	end
 end
-local function getBackpackTools(player)
-    local backpack = player:FindFirstChildOfClass("Backpack")
-    if not backpack then return nil end
-    local foundTools = {}
-    local addedTools = {}
-    for _, tool in ipairs(backpack:GetChildren()) do
-        local mappedName = toolNames[tool.Name]
-        if mappedName and not addedTools[mappedName] then
-            addedTools[mappedName] = true
-            table.insert(foundTools, mappedName)
-        end
-    end
-    return #foundTools>0 and table.concat(foundTools,", ") or nil
+
+RunService.RenderStepped:Connect(function()
+	for _, entity in pairs(Entities:GetChildren()) do
+		if entity:FindFirstChild("HumanoidRootPart") and entity:FindFirstChild("Head") and entity.Name ~= LocalPlayer.Name then
+			local player
+			for _, p in pairs(Players:GetPlayers()) do
+				if p.Name == entity.Name then
+					player = p
+					break
+				end
+			end
+			if not player then player = {Name = entity.Name, UserId = 0} end
+
+			if not espCache[entity] then
+				espCache[entity] = createESP(entity, player, false)
+			end
+		end
+	end
+
+	trackClones(PlayerClonesFolder)
+
+	for entity, esp in pairs(espCache) do
+		if esp.player and entity:FindFirstChild("HumanoidRootPart") then
+			local charName = esp.player.GetAttribute and esp.player:GetAttribute("CharacterName") or ""
+			esp.charLabel.Text = charName
+			esp.charLabel.TextColor3 = characterColors[charName] or Color3.new(1,1,1)
+
+			local dist = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and
+				(entity.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude or 0
+			esp.distLabel.Text = string.format("%.1f m", dist)
+
+			if esp.player.FindFirstChild then
+				esp.toolLabel.Text = getPlayerTools(esp.player)
+			end
+			esp.userLabel.Text = esp.player.Name
+			esp.deadLabel.Text = esp.dead and "💀" or ""
+		end
+	end
+end)
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+local stakesFolder = Workspace
+local espCache = {}
+
+local function createStakeESP(stake)
+    local primaryPart = stake:FindFirstChild("PrimaryPart") or stake:FindFirstChild("Handle") or stake:FindFirstChildWhichIsA("BasePart")
+    if not primaryPart then return end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "IndestructibleESP"
+    billboard.Adornee = primaryPart
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+    billboard.ClipsDescendants = false
+    billboard.Parent = stake
+
+    local uiList = Instance.new("UIListLayout")
+    uiList.FillDirection = Enum.FillDirection.Vertical
+    uiList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    uiList.VerticalAlignment = Enum.VerticalAlignment.Top
+    uiList.SortOrder = Enum.SortOrder.LayoutOrder
+    uiList.Parent = billboard
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, 0, 0, 20)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextScaled = true
+    nameLabel.Font = Enum.Font.FredokaOne
+    nameLabel.TextStrokeTransparency = 1
+    nameLabel.TextColor3 = Color3.new(1,1,1)
+    nameLabel.Text = "IndestructibleWhiteOakStake"
+    nameLabel.Parent = billboard
+
+    local distLabel = Instance.new("TextLabel")
+    distLabel.Name = "Distance"
+    distLabel.Size = UDim2.new(1, 0, 0, 20)
+    distLabel.BackgroundTransparency = 1
+    distLabel.TextScaled = true
+    distLabel.Font = Enum.Font.FredokaOne
+    distLabel.TextStrokeTransparency = 1
+    distLabel.TextColor3 = Color3.new(1,1,1)
+    distLabel.Text = ""
+    distLabel.Parent = billboard
+
+    return {
+        billboard = billboard,
+        nameLabel = nameLabel,
+        distLabel = distLabel,
+        stake = stake
+    }
 end
-local function convertStudsToMeters(studs)
-    return studs*0.28
-end
-local function removeESP(obj)
-    if espElements[obj] then
-        local e = espElements[obj]
-        for _, v in pairs(e) do
-            if v and v.Remove then v:Remove() end
-        end
-        espElements[obj] = nil
-    end
-end
-local function updateESP()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player~=LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local rootPart = player.Character.HumanoidRootPart
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid and humanoid.Health>0 and not isTeammate(player) then
-                local distance = convertStudsToMeters((LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude)
-                local screenPos,onScreen = Camera:WorldToViewportPoint(rootPart.Position)
-                if distance<maxDistance and onScreen then
-                    local size = Vector2.new(1000/screenPos.Z,2000/screenPos.Z)
-                    local pos = Vector2.new(screenPos.X-size.X/2,screenPos.Y-size.Y/2)
-                    if not espElements[player] then
-                        espElements[player] = {
-                            box=createBox(Color3.fromRGB(0,0,255)),
-                            charName=createText(14,Color3.fromRGB(150,150,150)),
-                            name=createText(14,Color3.fromRGB(255,255,255)),
-                            distance=createText(12,Color3.fromRGB(255,255,255)),
-                            tools=createText(12,Color3.fromRGB(150,150,150))
-                        }
-                        player.AncestryChanged:Connect(function(_,parent) if not parent then removeESP(player) end end)
-                        humanoid.Died:Connect(function() removeESP(player) end)
-                    end
-                    local e = espElements[player]
-                    e.box.Size = size
-                    e.box.Position = pos
-                    e.box.Visible = true
-                    if _G.Settings.ShowNames then
-                        local charName = player:GetAttribute("CharacterName")
-                        e.charName.Text = charName or ""
-                        e.charName.Position = Vector2.new(screenPos.X,pos.Y-34)
-                        e.charName.Visible = charName~=nil
-                        e.name.Text = player.Name
-                        e.name.Position = Vector2.new(screenPos.X,pos.Y-20)
-                        e.name.Visible = true
-                        e.distance.Text = string.format("%.1f meters",distance)
-                        e.distance.Position = Vector2.new(screenPos.X,pos.Y+size.Y+2)
-                        e.distance.Visible = _G.Settings.ShowDistance
-                        local toolsText = getBackpackTools(player)
-                        e.tools.Text = toolsText or ""
-                        e.tools.Position = Vector2.new(screenPos.X,pos.Y+size.Y+16)
-                        e.tools.Visible = toolsText~=nil
-                    else
-                        e.charName.Visible=false
-                        e.name.Visible=false
-                        e.distance.Visible=false
-                        e.tools.Visible=false
-                    end
-                else
-                    removeESP(player)
-                end
-            else
-                removeESP(player)
+
+RunService.RenderStepped:Connect(function()
+    for _, stake in pairs(stakesFolder:GetChildren()) do
+        if stake.Name == "IndestructibleWhiteOakStake" and stake:IsA("Model") then
+            if not espCache[stake] then
+                espCache[stake] = createStakeESP(stake)
             end
-        else
-            removeESP(player)
-        end
-    end
-    local playerCloneFolder = workspace:FindFirstChild("playerCloneFolder")
-    if playerCloneFolder then
-        for _, obj in ipairs(playerCloneFolder:GetChildren()) do
-            if obj:IsA("Model") then
-                for _, part in ipairs(obj:GetChildren()) do
-                    if part:IsA("BasePart") then
-                        local distance = convertStudsToMeters((LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude)
-                        local screenPos,onScreen = Camera:WorldToViewportPoint(part.Position)
-                        if distance<maxDistance and onScreen then
-                            local size = Vector2.new(1000/screenPos.Z,2000/screenPos.Z)
-                            local pos = Vector2.new(screenPos.X-size.X/2,screenPos.Y-size.Y/2)
-                            if not espElements[obj] then
-                                espElements[obj] = {
-                                    box=createBox(Color3.fromRGB(255,0,0)),
-                                    name=createText(14,Color3.fromRGB(255,255,255)),
-                                    distance=createText(12,Color3.fromRGB(255,255,255))
-                                }
-                                obj.AncestryChanged:Connect(function(_,parent) if not parent then removeESP(obj) end end)
-                            end
-                            local e = espElements[obj]
-                            e.box.Size = size
-                            e.box.Position = pos
-                            e.box.Visible = true
-                            e.name.Text = obj.Name
-                            e.name.Position = Vector2.new(screenPos.X,pos.Y-20)
-                            e.name.Visible=true
-                            e.distance.Text = string.format("%.1f meters",distance)
-                            e.distance.Position = Vector2.new(screenPos.X,pos.Y+size.Y+2)
-                            e.distance.Visible=_G.Settings.ShowDistance
-                        else
-                            removeESP(obj)
-                        end
-                    end
-                end
+            local esp = espCache[stake]
+            local playerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if playerHRP and esp.stake:FindFirstChild("PrimaryPart") or esp.stake:FindFirstChildWhichIsA("BasePart") then
+                local part = esp.stake.PrimaryPart or esp.stake:FindFirstChildWhichIsA("BasePart")
+                local dist = (playerHRP.Position - part.Position).Magnitude
+                esp.distLabel.Text = string.format("%.1f m", dist)
             end
         end
     end
-    for _, part in ipairs(workspace:GetChildren()) do
-        if part.Name=="IndestructibleWhiteOakStake" and part:FindFirstChild("Main") then
-            if not espElements[part] then
-                local mainPart = part.Main
-                local billboard = Instance.new("BillboardGui",mainPart)
-                billboard.Size=UDim2.new(0,100,0,25)
-                billboard.Adornee=mainPart
-                billboard.AlwaysOnTop=true
-                billboard.StudsOffset=Vector3.new(0,5,0)
-                local label = Instance.new("TextLabel",billboard)
-                label.Size=UDim2.new(1,0,1,0)
-                label.BackgroundTransparency=1
-                label.TextColor3=Color3.fromRGB(169,169,169)
-                label.TextScaled=true
-                label.TextStrokeTransparency=0.8
-                espElements[part]={mainPart=mainPart,billboard=billboard,label=label}
+end)
+
+spawn(function()
+    while true do
+        for stake, esp in pairs(espCache) do
+            if not stake.Parent then
+                esp.billboard:Destroy()
+                espCache[stake] = nil
             end
-            local e = espElements[part]
-            local distance=(Camera.CFrame.Position-e.mainPart.Position).Magnitude
-            e.label.Text="White Oak Stake\n"..math.round(distance).." studs"
-            e.billboard.Enabled=Camera:WorldToViewportPoint(e.mainPart.Position).Z>0
         end
+        wait(1)
     end
-end
-RunService.RenderStepped:Connect(updateESP)
+end)
+
 local RunStateToggled = game:GetService("ReplicatedStorage").Remotes.EnhancedMovementService.RunStateToggled
 local mt = getrawmetatable(game)
 local old = mt.__namecall
