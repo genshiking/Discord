@@ -41,82 +41,66 @@ local function getPlayerTools(player)
 	return table.concat(tools, ", ")
 end
 
+local function makeLabel(parent, name, height)
+	local label = Instance.new("TextLabel")
+	label.Name = name
+	label.Size = UDim2.new(1, 0, 0, height)
+	label.BackgroundTransparency = 1
+	label.TextScaled = true
+	label.Font = Enum.Font.FredokaOne
+	label.TextStrokeTransparency = 1
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Parent = parent
+	return label
+end
+
 local function createESP(entity, player, dead)
 	local head = entity:FindFirstChild("Head")
-	if not head then return end
+	local root = entity:FindFirstChild("HumanoidRootPart")
+	if not head or not root then return end
 
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "ESP"
-	billboard.Adornee = head
-	billboard.Size = UDim2.new(0, 200, 0, 120)
-	billboard.StudsOffset = Vector3.new(0, 2, 0)
-	billboard.AlwaysOnTop = true
-	billboard.ClipsDescendants = false
-	billboard.Parent = entity
+	local topBillboard = Instance.new("BillboardGui")
+	topBillboard.Name = "ESP_Top"
+	topBillboard.Adornee = head
+	topBillboard.Size = UDim2.new(0, 120, 0, 75)
+	topBillboard.StudsOffset = Vector3.new(0, 1.75, 0)
+	topBillboard.AlwaysOnTop = true
+	topBillboard.Parent = entity
 
-	local uiList = Instance.new("UIListLayout")
-	uiList.FillDirection = Enum.FillDirection.Vertical
-	uiList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	uiList.VerticalAlignment = Enum.VerticalAlignment.Top
-	uiList.SortOrder = Enum.SortOrder.LayoutOrder
-	uiList.Parent = billboard
+	local bottomBillboard = Instance.new("BillboardGui")
+	bottomBillboard.Name = "ESP_Bottom"
+	bottomBillboard.Adornee = root
+	bottomBillboard.Size = UDim2.new(0, 120, 0, 35)
+	bottomBillboard.StudsOffset = Vector3.new(0, -3.25, 0)
+	bottomBillboard.AlwaysOnTop = true
+	bottomBillboard.Parent = entity
 
-	local deadLabel = Instance.new("TextLabel")
-	deadLabel.Name = "DeadLabel"
-	deadLabel.Size = UDim2.new(1, 0, 0, 20)
-	deadLabel.BackgroundTransparency = 1
-	deadLabel.TextScaled = true
-	deadLabel.Font = Enum.Font.FredokaOne
-	deadLabel.TextStrokeTransparency = 1
-	deadLabel.TextColor3 = Color3.new(0,0,0)
+	local topList = Instance.new("UIListLayout")
+	topList.FillDirection = Enum.FillDirection.Vertical
+	topList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	topList.VerticalAlignment = Enum.VerticalAlignment.Top
+	topList.SortOrder = Enum.SortOrder.LayoutOrder
+	topList.Parent = topBillboard
+
+	local bottomList = Instance.new("UIListLayout")
+	bottomList.FillDirection = Enum.FillDirection.Vertical
+	bottomList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	bottomList.VerticalAlignment = Enum.VerticalAlignment.Bottom
+	bottomList.SortOrder = Enum.SortOrder.LayoutOrder
+	bottomList.Parent = bottomBillboard
+
+	local deadLabel = makeLabel(topBillboard, "DeadLabel", 12)
+	local charLabel = makeLabel(topBillboard, "CharacterName", 12)
+	local userLabel = makeLabel(topBillboard, "Username", 12)
+	local distLabel = makeLabel(bottomBillboard, "Distance", 12)
+	local toolLabel = makeLabel(bottomBillboard, "Tools", 12)
+
+	userLabel.TextColor3 = LocalPlayer:IsFriendsWith(player.UserId) and Color3.fromRGB(139, 255, 139) or Color3.new(1, 1, 1)
 	deadLabel.Text = dead and "💀" or ""
-	deadLabel.Parent = billboard
-
-	local charLabel = Instance.new("TextLabel")
-	charLabel.Name = "CharacterName"
-	charLabel.Size = UDim2.new(1, 0, 0, 20)
-	charLabel.BackgroundTransparency = 1
-	charLabel.TextScaled = true
-	charLabel.Font = Enum.Font.FredokaOne
-	charLabel.TextStrokeTransparency = 1
-	charLabel.TextColor3 = Color3.new(1,1,1)
-	charLabel.Parent = billboard
-
-	local userLabel = Instance.new("TextLabel")
-	userLabel.Name = "Username"
-	userLabel.Size = UDim2.new(1, 0, 0, 20)
-	userLabel.BackgroundTransparency = 1
-	userLabel.TextScaled = true
-	userLabel.Font = Enum.Font.FredokaOne
-	userLabel.TextStrokeTransparency = 1
-	userLabel.TextColor3 = LocalPlayer:IsFriendsWith(player.UserId) and Color3.fromRGB(139,255,139) or Color3.new(1,1,1)
-	userLabel.Text = player.Name
-	userLabel.Parent = billboard
-
-	local distLabel = Instance.new("TextLabel")
-	distLabel.Name = "Distance"
-	distLabel.Size = UDim2.new(1, 0, 0, 20)
-	distLabel.BackgroundTransparency = 1
-	distLabel.TextScaled = true
-	distLabel.Font = Enum.Font.FredokaOne
-	distLabel.TextStrokeTransparency = 1
-	distLabel.TextColor3 = Color3.new(1,1,1)
-	distLabel.Text = ""
-	distLabel.Parent = billboard
-
-	local toolLabel = Instance.new("TextLabel")
-	toolLabel.Name = "Tools"
-	toolLabel.Size = UDim2.new(1,0,0,20)
-	toolLabel.BackgroundTransparency = 1
-	toolLabel.TextScaled = true
-	toolLabel.Font = Enum.Font.FredokaOne
-	toolLabel.TextStrokeTransparency = 1
-	toolLabel.TextColor3 = Color3.new(1,1,1)
-	toolLabel.Text = ""
-	toolLabel.Parent = billboard
 
 	return {
-		billboard = billboard,
+		topBillboard = topBillboard,
+		bottomBillboard = bottomBillboard,
 		deadLabel = deadLabel,
 		charLabel = charLabel,
 		userLabel = userLabel,
@@ -168,14 +152,23 @@ RunService.RenderStepped:Connect(function()
 	trackClones(PlayerClonesFolder)
 
 	for entity, esp in pairs(espCache) do
-		if esp.player and entity:FindFirstChild("HumanoidRootPart") then
+		if not entity.Parent
+			or (entity.Parent ~= Entities and entity.Parent ~= PlayerClonesFolder)
+			or not entity:FindFirstChild("Head")
+			or not entity:FindFirstChild("HumanoidRootPart") then
+			if esp.topBillboard then esp.topBillboard:Destroy() end
+			if esp.bottomBillboard then esp.bottomBillboard:Destroy() end
+			espCache[entity] = nil
+		else
 			local charName = esp.player.GetAttribute and esp.player:GetAttribute("CharacterName") or ""
 			esp.charLabel.Text = charName
-			esp.charLabel.TextColor3 = characterColors[charName] or Color3.new(1,1,1)
+			esp.charLabel.TextColor3 = characterColors[charName] or Color3.new(1, 1, 1)
 
-			local dist = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and
-				(entity.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude or 0
-			esp.distLabel.Text = string.format("%.1f m", dist)
+			local dist = 0
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				dist = (entity.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+			end
+			esp.distLabel.Text = string.format("%.0f m", dist)
 
 			if esp.player.FindFirstChild then
 				esp.toolLabel.Text = getPlayerTools(esp.player)
