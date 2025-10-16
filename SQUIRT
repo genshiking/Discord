@@ -398,7 +398,6 @@ if #children >= 5 then
     children[4]:Destroy()
     children[5]:Destroy()
 end
-if placeId==10561483644 then
     local function destroyTunnelDoor(door) if door and door.Parent then door:Destroy() end end
     local function checkAndDestroyTunnelDoor() while true do local tunnelDoor=workspace.Interactables.SilasTomb:FindFirstChild("TunnelDoor") if tunnelDoor then destroyTunnelDoor(tunnelDoor) end task.wait(0.1) end end
     coroutine.wrap(checkAndDestroyTunnelDoor)()
@@ -409,7 +408,6 @@ if placeId==10561483644 then
     local garage=workspace:FindFirstChild("Buildings") and workspace.Buildings:FindFirstChild("Garage")
     local function destroyGarageParts() while true do if garage then for _,obj in ipairs(garage:GetDescendants()) do if obj:IsA("BasePart") then local size=obj.Size if math.abs(size.X-0.124)<0.01 and math.abs(size.Y-6.944)<0.01 and math.abs(size.Z-37.45)<0.01 then obj:Destroy() end end end end task.wait(1) end end
     coroutine.wrap(destroyGarageParts)()
-end
 
 -- Clustered Mobile Ability Button (Optimized)
 -- Supports all original abilities, with caching to reduce lag
