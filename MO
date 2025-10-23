@@ -14,9 +14,9 @@ end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-	Name = "ESP Executor",
-	LoadingTitle = "ESP Executor",
-	LoadingSubtitle = "by Juno",
+	Name = "Marvel Omega",
+	LoadingTitle = "Marvel Omega",
+	LoadingSubtitle = "by juno",
 	ConfigurationSaving = { Enabled = true, FolderName = "ESP_Executor", FileName = "Config" }
 })
 
