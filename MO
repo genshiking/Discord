@@ -140,17 +140,7 @@ end
 RunService.RenderStepped:Connect(updateESP)
 Players.PlayerRemoving:Connect(function(p) if espElements[p] then for _, v in pairs(espElements[p]) do v:Remove() end espElements[p] = nil end end)
 ESPTab:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Flag = "ESP_Toggle", Callback = function(v) _G.ESPEnabled = v end })
-ESPTab:CreateSlider({
-    Name = "Flight Speed",
-    Range = {0,1000},
-    Increment = 10,
-    Suffix = "Speed",
-    CurrentValue = 0,
-    Callback = function(v)
-        local m = workspace:FindFirstChild(playerName)
-        if m then m:SetAttribute("FlightSpeed", v) end
-    end
-})
+ESPTab:CreateSlider({Name="Flight Speed",Range={0,1000},Increment=10,Suffix="Speed",CurrentValue=0,Callback=function(v)local m=workspace:FindFirstChild(playerName) if m then m:SetAttribute("FlightSpeed",v) end _G._FlightSpeed=v end}) RunService.RenderStepped:Connect(function() local m=workspace:FindFirstChild(playerName) if m and m:GetAttribute("FlightSpeed")~=_G._FlightSpeed then m:SetAttribute("FlightSpeed",_G._FlightSpeed) end end)
 
 local HitboxTab = Window:CreateTab("Hitbox Expander")
 _G.HitboxEnabled = false
