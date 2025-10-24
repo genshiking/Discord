@@ -9,15 +9,15 @@ local originalProperties = {}
 
 local modules = ReplicatedStorage:FindFirstChild("Modules")
 if modules and modules:FindFirstChild("Music") then
-	modules.Music:Destroy()
+modules.Music:Destroy()
 end
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet('[https://sirius.menu/rayfield'))(](https://sirius.menu/rayfield'%29%29%28))
 local Window = Rayfield:CreateWindow({
-	Name = "Marvel Omega",
-	LoadingTitle = "Marvel Omega",
-	LoadingSubtitle = "by trans black woman",
-	ConfigurationSaving = { Enabled = true, FolderName = "ESP_Executor", FileName = "Config" }
+Name = "Marvel Omega",
+LoadingTitle = "Marvel Omega",
+LoadingSubtitle = "by trans black woman",
+ConfigurationSaving = { Enabled = true, FolderName = "ESP_Executor", FileName = "Config" }
 })
 
 local ESPTab = Window:CreateTab("Main")
@@ -25,122 +25,155 @@ _G.ESPEnabled = false
 _G.Settings = { ShowNames = true, ShowDistance = true }
 
 local function createBox()
-	local box = Drawing.new("Square")
-	box.Thickness = 1
-	box.Transparency = 1
-	box.Filled = false
-	box.Color = Color3.fromRGB(255, 0, 0)
-	return box
+local box = Drawing.new("Square")
+box.Thickness = 1
+box.Transparency = 1
+box.Filled = false
+box.Color = Color3.fromRGB(255, 0, 0)
+return box
 end
 
 local function createText(size)
-	local text = Drawing.new("Text")
-	text.Size = size
-	text.Center = true
-	text.Outline = true
-	text.Color = Color3.fromRGB(255, 255, 255)
-	return text
+local text = Drawing.new("Text")
+text.Size = size
+text.Center = true
+text.Outline = true
+text.Color = Color3.fromRGB(255, 255, 255)
+return text
 end
 
 local espElements = {}
 local function isTeammate(p) if LocalPlayer.Team then return p.Team == LocalPlayer.Team end return false end
 
 local function updateESP()
-	if not _G.ESPEnabled then
-		for _, elements in pairs(espElements) do for _, v in pairs(elements) do v.Visible = false end end
-		return
-	end
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and not isTeammate(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local char = player.Character
-			local root = char:FindFirstChild("HumanoidRootPart")
-			local hum = char:FindFirstChildOfClass("Humanoid")
-			if root and hum and hum.Health > 0 then
-				local dist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude * 0.28
-				local pos, onScr = Camera:WorldToViewportPoint(root.Position)
-				if onScr then
-					local size = Vector2.new(1000 / pos.Z, 2000 / pos.Z)
-					local pos2 = Vector2.new(pos.X - size.X / 2, pos.Y - size.Y / 2)
-					if not espElements[player] then
-						espElements[player] = {
-							box = createBox(),
-							name = createText(14),
-							distance = createText(12),
-							timestone = createText(14),
-							darkhold = createText(14),
-							powerstone = createText(14)
-						}
-					end
-					local e = espElements[player]
-					e.box.Size = size
-					e.box.Position = pos2
-					e.box.Visible = true
-					if _G.Settings.ShowNames then
-						e.name.Text = player.Name
-						e.name.Position = Vector2.new(pos.X, pos2.Y - 18)
-						e.name.Color = LocalPlayer:IsFriendsWith(player.UserId) and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,255,255)
-						e.name.Visible = true
-						if _G.Settings.ShowDistance then
-							e.distance.Text = string.format("%.1f meters", dist)
-							e.distance.Position = Vector2.new(pos.X, pos2.Y + size.Y + 2)
-							e.distance.Visible = true
-						else
-							e.distance.Visible = false
-						end
-					else
-						e.name.Visible = false
-						e.distance.Visible = false
-					end
-					local wObj = workspace:FindFirstChild(player.Name)
-					if wObj then
-						if wObj:GetAttribute("TimeStone/LastUpdate") then
-							e.timestone.Text = "TimeStone"
-							e.timestone.Color = Color3.fromRGB(144,255,119)
-							e.timestone.Position = Vector2.new(pos.X, pos2.Y - 32)
-							e.timestone.Visible = true
-						else
-							e.timestone.Visible = false
-						end
-						local af = wObj:FindFirstChild("AbilityFolder")
-						if af and af:GetAttribute("DarkholdSpell_One") then
-							local y = e.timestone.Visible and 46 or 32
-							e.darkhold.Text = "Darkhold"
-							e.darkhold.Color = Color3.fromRGB(139,69,19)
-							e.darkhold.Position = Vector2.new(pos.X, pos2.Y - y)
-							e.darkhold.Visible = true
-						else
-							e.darkhold.Visible = false
-						end
-						if wObj:GetAttribute("BeamStrengthMultiplier") then
-							local y = (e.timestone.Visible and e.darkhold.Visible) and 60 or (e.timestone.Visible or e.darkhold.Visible) and 46 or 32
-							e.powerstone.Text = "PowerStone"
-							e.powerstone.Color = Color3.fromRGB(145,130,255)
-							e.powerstone.Position = Vector2.new(pos.X, pos2.Y - y)
-							e.powerstone.Visible = true
-						else
-							e.powerstone.Visible = false
-						end
-					else
-						e.timestone.Visible = false
-						e.darkhold.Visible = false
-						e.powerstone.Visible = false
-					end
-				else
-					if espElements[player] then for _, v in pairs(espElements[player]) do v.Visible = false end end
-				end
-			elseif espElements[player] then
-				for _, v in pairs(espElements[player]) do v.Visible = false end
-			end
-		elseif espElements[player] then
-			for _, v in pairs(espElements[player]) do v.Visible = false end
-		end
-	end
+if not _G.ESPEnabled then
+for _, elements in pairs(espElements) do for _, v in pairs(elements) do v.Visible = false end end
+return
+end
+for _, player in ipairs(Players:GetPlayers()) do
+if player ~= LocalPlayer and not isTeammate(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+local char = player.Character
+local root = char:FindFirstChild("HumanoidRootPart")
+local hum = char:FindFirstChildOfClass("Humanoid")
+if root and hum and hum.Health > 0 then
+local dist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude * 0.28
+local pos, onScr = Camera:WorldToViewportPoint(root.Position)
+if onScr then
+local size = Vector2.new(1000 / pos.Z, 2000 / pos.Z)
+local pos2 = Vector2.new(pos.X - size.X / 2, pos.Y - size.Y / 2)
+if not espElements[player] then
+espElements[player] = {
+box = createBox(),
+name = createText(14),
+distance = createText(12),
+timestone = createText(14),
+darkhold = createText(14),
+powerstone = createText(14)
+}
+end
+local e = espElements[player]
+e.box.Size = size
+e.box.Position = pos2
+e.box.Visible = true
+if _G.Settings.ShowNames then
+e.name.Text = player.Name
+e.name.Position = Vector2.new(pos.X, pos2.Y - 18)
+e.name.Color = LocalPlayer:IsFriendsWith(player.UserId) and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,255,255)
+e.name.Visible = true
+if _G.Settings.ShowDistance then
+e.distance.Text = string.format("%.1f meters", dist)
+e.distance.Position = Vector2.new(pos.X, pos2.Y + size.Y + 2)
+e.distance.Visible = true
+else
+e.distance.Visible = false
+end
+else
+e.name.Visible = false
+e.distance.Visible = false
+end
+local wObj = workspace:FindFirstChild(player.Name)
+if wObj then
+if wObj:GetAttribute("TimeStone/LastUpdate") then
+e.timestone.Text = "TimeStone"
+e.timestone.Color = Color3.fromRGB(144,255,119)
+e.timestone.Position = Vector2.new(pos.X, pos2.Y - 32)
+e.timestone.Visible = true
+else
+e.timestone.Visible = false
+end
+local af = wObj:FindFirstChild("AbilityFolder")
+if af and af:GetAttribute("DarkholdSpell_One") then
+local y = e.timestone.Visible and 46 or 32
+e.darkhold.Text = "Darkhold"
+e.darkhold.Color = Color3.fromRGB(139,69,19)
+e.darkhold.Position = Vector2.new(pos.X, pos2.Y - y)
+e.darkhold.Visible = true
+else
+e.darkhold.Visible = false
+end
+if wObj:GetAttribute("BeamStrengthMultiplier") then
+local y = (e.timestone.Visible and e.darkhold.Visible) and 60 or (e.timestone.Visible or e.darkhold.Visible) and 46 or 32
+e.powerstone.Text = "PowerStone"
+e.powerstone.Color = Color3.fromRGB(145,130,255)
+e.powerstone.Position = Vector2.new(pos.X, pos2.Y - y)
+e.powerstone.Visible = true
+else
+e.powerstone.Visible = false
+end
+else
+e.timestone.Visible = false
+e.darkhold.Visible = false
+e.powerstone.Visible = false
+end
+else
+if espElements[player] then for _, v in pairs(espElements[player]) do v.Visible = false end end
+end
+elseif espElements[player] then
+for _, v in pairs(espElements[player]) do v.Visible = false end
+end
+elseif espElements[player] then
+for _, v in pairs(espElements[player]) do v.Visible = false end
+end
+end
 end
 
 RunService.RenderStepped:Connect(updateESP)
 Players.PlayerRemoving:Connect(function(p) if espElements[p] then for _, v in pairs(espElements[p]) do v:Remove() end espElements[p] = nil end end)
 ESPTab:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Flag = "ESP_Toggle", Callback = function(v) _G.ESPEnabled = v end })
-ESPTab:CreateSlider({ Name = "Flight Speed", Range = {0,1000}, Increment = 10, Suffix = "Speed", CurrentValue = 0, Callback = function(v) local m = workspace:FindFirstChild(playerName) if m then m:SetAttribute("FlightSpeed", v) end end })
+
+local lockedFlightSpeed = 0
+local flightLockLoopActive = false
+local function lockFlightSpeedLoop()
+if flightLockLoopActive then return end
+flightLockLoopActive = true
+task.spawn(function()
+while true do
+local m = workspace:FindFirstChild(playerName)
+if m and lockedFlightSpeed > 0 then
+if m:GetAttribute("FlightSpeed") ~= lockedFlightSpeed then
+m:SetAttribute("FlightSpeed", lockedFlightSpeed)
+end
+end
+task.wait(0.05)
+end
+end)
+end
+lockFlightSpeedLoop()
+
+ESPTab:CreateSlider({
+Name = "Flight Speed",
+Range = {0,1000},
+Increment = 10,
+Suffix = "Speed",
+CurrentValue = 0,
+Callback = function(v)
+local m = workspace:FindFirstChild(playerName)
+lockedFlightSpeed = v
+if m then
+m:SetAttribute("FlightSpeed", v)
+end
+end
+})
 
 local HitboxTab = Window:CreateTab("Hitbox Expander")
 _G.HitboxEnabled = false
@@ -148,71 +181,74 @@ _G.HitboxIgnoreFriends = true
 _G.HitboxSize = 30
 
 local function resetHRP(char)
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-	if originalProperties[hrp] then
-		hrp.Size = originalProperties[hrp].Size
-		hrp.Transparency = originalProperties[hrp].Transparency
-		hrp.CanCollide = originalProperties[hrp].CanCollide
-		originalProperties[hrp] = nil
-	else
-		hrp.Size = Vector3.new(2,2,1)
-		hrp.Transparency = 1
-		hrp.CanCollide = true
-	end
+if not char then return end
+local hrp = char:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
+if originalProperties[hrp] then
+hrp.Size = originalProperties[hrp].Size
+hrp.Transparency = originalProperties[hrp].Transparency
+hrp.CanCollide = originalProperties[hrp].CanCollide
+originalProperties[hrp] = nil
+else
+hrp.Size = Vector3.new(2,2,1)
+hrp.Transparency = 1
+hrp.CanCollide = true
+end
 end
 
 local function applyHitboxToHRP(char)
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-	if not originalProperties[hrp] then
-		originalProperties[hrp] = { Size = hrp.Size, Transparency = hrp.Transparency, CanCollide = hrp.CanCollide }
-	end
+if not char then return end
+local hrp = char:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
+if not originalProperties[hrp] then
+originalProperties[hrp] = { Size = hrp.Size, Transparency = hrp.Transparency, CanCollide = hrp.CanCollide }
+end
 
-	local player = Players:GetPlayerFromCharacter(char)
-	if _G.HitboxEnabled and (not _G.HitboxIgnoreFriends or (player and not LocalPlayer:IsFriendsWith(player.UserId))) then
-		hrp.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
-		hrp.Transparency = 0.5
-		hrp.CanCollide = false
-	else
-		resetHRP(char)
-	end
+```
+local player = Players:GetPlayerFromCharacter(char)
+if _G.HitboxEnabled and (not _G.HitboxIgnoreFriends or (player and not LocalPlayer:IsFriendsWith(player.UserId))) then
+	hrp.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+	hrp.Transparency = 0.5
+	hrp.CanCollide = false
+else
+	resetHRP(char)
+end
+```
+
 end
 
 local function updateHitboxForPlayer(player)
-	if player == LocalPlayer then return end
-	if not player.Character then return end
-	applyHitboxToHRP(player.Character)
+if player == LocalPlayer then return end
+if not player.Character then return end
+applyHitboxToHRP(player.Character)
 end
 
 local function onPlayerAddedForHitbox(player)
-	player.CharacterAdded:Connect(function()
-		task.wait(0.2)
-		updateHitboxForPlayer(player)
-	end)
-	updateHitboxForPlayer(player)
+player.CharacterAdded:Connect(function()
+task.wait(0.2)
+updateHitboxForPlayer(player)
+end)
+updateHitboxForPlayer(player)
 end
 
 Players.PlayerAdded:Connect(onPlayerAddedForHitbox)
 for _, p in ipairs(Players:GetPlayers()) do onPlayerAddedForHitbox(p) end
 
 HitboxTab:CreateToggle({ Name = "Enable Hitbox Expander", CurrentValue = false, Flag = "Hitbox_Toggle", Callback = function(v) _G.HitboxEnabled = v for _, p in ipairs(Players:GetPlayers()) do updateHitboxForPlayer(p) end end })
-HitboxTab:CreateToggle({ 
-	Name = "Ignore Friends", 
-	CurrentValue = true, 
-	Flag = "Hitbox_Ignore_Friends", 
-	Callback = function(v)
-		_G.HitboxIgnoreFriends = v
-		for _, p in ipairs(Players:GetPlayers()) do
-			if p ~= LocalPlayer and p.Character then
-				updateHitboxForPlayer(p)
-			end
-		end
-	end 
+HitboxTab:CreateToggle({
+Name = "Ignore Friends",
+CurrentValue = true,
+Flag = "Hitbox_Ignore_Friends",
+Callback = function(v)
+_G.HitboxIgnoreFriends = v
+for _, p in ipairs(Players:GetPlayers()) do
+if p ~= LocalPlayer and p.Character then
+updateHitboxForPlayer(p)
+end
+end
+end
 })
-HitboxTab:CreateSlider({ Name = "Hitbox Size", Range = {1,200}, Increment = 5, Suffix = "Size", CurrentValue = 30, Flag = "Hitbox_Size", Callback = function(v) _G.HitboxSize = v for _, p in ipairs(Players:GetPlayers()) do updateHitboxForPlayer(p) end end }) 
+HitboxTab:CreateSlider({ Name = "Hitbox Size", Range = {1,200}, Increment = 5, Suffix = "Size", CurrentValue = 30, Flag = "Hitbox_Size", Callback = function(v) _G.HitboxSize = v for _, p in ipairs(Players:GetPlayers()) do updateHitboxForPlayer(p) end end })
 
 local CollectorTab = Window:CreateTab("Item Collector")
 _G.CollectorEnabled = false
@@ -221,79 +257,79 @@ _G.DarkholdEnabled = false
 local offset = Vector3.new(3,2,0)
 
 local function grabItem(root, item)
-	if not (root and item and item:IsDescendantOf(workspace)) then return end
-	local orig = root.CFrame
-	root.CFrame = item.CFrame + offset
-	while item:IsDescendantOf(workspace) and (_G.CollectorEnabled or _G.TimeStoneEnabled or _G.DarkholdEnabled) do
-		for _, prompt in ipairs(item:GetDescendants()) do
-			if prompt:IsA("ProximityPrompt") then
-				pcall(function() fireproximityprompt(prompt) end)
-			end
-		end
-		task.wait(0.1)
-	end
-	if root and root.Parent then
-		pcall(function() root.CFrame = orig end)
-	end
+if not (root and item and item:IsDescendantOf(workspace)) then return end
+local orig = root.CFrame
+root.CFrame = item.CFrame + offset
+while item:IsDescendantOf(workspace) and (_G.CollectorEnabled or _G.TimeStoneEnabled or _G.DarkholdEnabled) do
+for _, prompt in ipairs(item:GetDescendants()) do
+if prompt:IsA("ProximityPrompt") then
+pcall(function() fireproximityprompt(prompt) end)
+end
+end
+task.wait(0.1)
+end
+if root and root.Parent then
+pcall(function() root.CFrame = orig end)
+end
 end
 
 local function grabDarkhold(root, dark)
-	if not (root and dark and dark:IsDescendantOf(workspace)) then return end
-	local owner = dark:FindFirstChild("Owner")
-	if not owner then return end
-	local orig = root.CFrame
-	while dark:IsDescendantOf(workspace) and _G.DarkholdEnabled do
-		if owner.Value == nil or owner.Value == "" then
-			root.CFrame = dark.Root.CFrame + offset
-			for _, prompt in ipairs(dark:GetDescendants()) do
-				if prompt:IsA("ProximityPrompt") then
-					pcall(function() fireproximityprompt(prompt) end)
-				end
-			end
-		end
-		task.wait(0.1)
-	end
-	if root and root.Parent then
-		pcall(function() root.CFrame = orig end)
-	end
+if not (root and dark and dark:IsDescendantOf(workspace)) then return end
+local owner = dark:FindFirstChild("Owner")
+if not owner then return end
+local orig = root.CFrame
+while dark:IsDescendantOf(workspace) and _G.DarkholdEnabled do
+if owner.Value == nil or owner.Value == "" then
+root.CFrame = dark.Root.CFrame + offset
+for _, prompt in ipairs(dark:GetDescendants()) do
+if prompt:IsA("ProximityPrompt") then
+pcall(function() fireproximityprompt(prompt) end)
+end
+end
+end
+task.wait(0.1)
+end
+if root and root.Parent then
+pcall(function() root.CFrame = orig end)
+end
 end
 
 local function checkExistingAndGrab(root)
-	for _, child in ipairs(workspace:GetChildren()) do
-		if child.Name == "PowerStone" and _G.CollectorEnabled then
-			spawn(function() pcall(grabItem, root, child) end)
-		elseif child.Name == "TimeStone" and _G.TimeStoneEnabled then
-			spawn(function() pcall(grabItem, root, child) end)
-		elseif child.Name == "Darkhold" and _G.DarkholdEnabled then
-			spawn(function() pcall(grabDarkhold, root, child) end)
-		end
-	end
+for _, child in ipairs(workspace:GetChildren()) do
+if child.Name == "PowerStone" and _G.CollectorEnabled then
+spawn(function() pcall(grabItem, root, child) end)
+elseif child.Name == "TimeStone" and _G.TimeStoneEnabled then
+spawn(function() pcall(grabItem, root, child) end)
+elseif child.Name == "Darkhold" and _G.DarkholdEnabled then
+spawn(function() pcall(grabDarkhold, root, child) end)
+end
+end
 end
 
 local persistentChildAddedConnected = false
 local function ensurePersistentWorkspaceListener()
-	if persistentChildAddedConnected then return end
-	persistentChildAddedConnected = true
-	workspace.ChildAdded:Connect(function(child)
-		task.wait(0.05)
-		local char = LocalPlayer.Character
-		local root = char and char:FindFirstChild("HumanoidRootPart")
-		if not root then return end
-		if child.Name == "PowerStone" and _G.CollectorEnabled then
-			spawn(function() pcall(grabItem, root, child) end)
-		elseif child.Name == "TimeStone" and _G.TimeStoneEnabled then
-			spawn(function() pcall(grabItem, root, child) end)
-		elseif child.Name == "Darkhold" and _G.DarkholdEnabled then
-			spawn(function() pcall(grabDarkhold, root, child) end)
-		end
-	end)
+if persistentChildAddedConnected then return end
+persistentChildAddedConnected = true
+workspace.ChildAdded:Connect(function(child)
+task.wait(0.05)
+local char = LocalPlayer.Character
+local root = char and char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+if child.Name == "PowerStone" and _G.CollectorEnabled then
+spawn(function() pcall(grabItem, root, child) end)
+elseif child.Name == "TimeStone" and _G.TimeStoneEnabled then
+spawn(function() pcall(grabItem, root, child) end)
+elseif child.Name == "Darkhold" and _G.DarkholdEnabled then
+spawn(function() pcall(grabDarkhold, root, child) end)
+end
+end)
 end
 
 local function onLocalCharacterReady(char)
-	local root = char:WaitForChild("HumanoidRootPart", 5)
-	if not root then return end
-	checkExistingAndGrab(root)
-	ensurePersistentWorkspaceListener()
+local root = char:WaitForChild("HumanoidRootPart", 5)
+if not root then return end
+checkExistingAndGrab(root)
+ensurePersistentWorkspaceListener()
 end
 
 LocalPlayer.CharacterAdded:Connect(function(c) task.wait(0.2) onLocalCharacterReady(c) end)
